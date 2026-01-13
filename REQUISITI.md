@@ -136,7 +136,7 @@ Perché è meglio? Perché ora sappiamo **quanto spesso**, **dove finisce il dat
 > Obiettivo: definire quali sensori servono, dove metterli, e quali vincoli fisici ci sono (meteo, temperatura, acqua, urti…).
 
 ### Requisiti funzionali (esempi)
-**RF-HW-01 — Peso**: Il device deve misurare il peso dell’arnia per stimare andamento nettare/colonia.  
+**[RF-HW-01 — Peso](DOCUMENTAZIONE%20HARDWARE.md#hx711-40kg)**: Il device deve misurare il peso dell’arnia per stimare andamento nettare/colonia.  
  - Nota dominio: il peso cresce con nettare e colonia, e diminuisce quando la colonia consuma miele o muore. 
  
 **RF-HW-01 — Monitoraggio Peso e Mielometro** Il device deve misurare il peso totale dell'arnia con una risoluzione minima di 100g e calcolare il guadagno netto giornaliero (funzione mielometro).
@@ -144,12 +144,12 @@ Perché è meglio? Perché ora sappiamo **quanto spesso**, **dove finisce il dat
  - Nota dominio: Il peso fluttua durante il giorno (le api escono a bottinare); la misura valida per il mielometro è la differenza di peso tra due notti consecutive (a bottinatrici rientrate e miele parzialmente deumidificato).
     
 
-**RF-HW-02 — Clima Interno (SHT21/BME280)** Il device deve misurare Temperatura e Umidità Relativa (RH) posizionato nella zona superiore (melario/coprifavo) e/o centrale (nido).
+**[RF-HW-02 — Clima Interno (SHT21/BME280)](DOCUMENTAZIONE%20HARDWARE.md#sht21---htu21--rf-hw-02)** Il device deve misurare Temperatura e Umidità Relativa (RH) posizionato nella zona superiore (melario/coprifavo) e/o centrale (nido).
 
  - Nota dominio:_ L'umidità dell'aria interna è inversamente proporzionale alla maturazione del miele. Una RH interna > 65% costante indica rischio fermentazione o blocco dell'evaporazione. La temperatura del nido deve rimanere stabile a ~35°C per la covata.
     
 
-**RF-HW-03 — Analisi Acustica (Spettro)** Il device deve campionare il rumore interno ed effettuare un'analisi in frequenza (FFT) per identificare picchi specifici tra 200Hz e 600Hz.
+**[RF-HW-03 — Analisi Acustica (Spettro)](DOCUMENTAZIONE%20HARDWARE.md#inmp441--rf-hw-03)** Il device deve campionare il rumore interno ed effettuare un'analisi in frequenza (FFT) per identificare picchi specifici tra 200Hz e 600Hz.
 
 -   _Nota dominio:_ Le api emettono frequenze specifiche per stati diversi: "Piping" (regine vergini pre-sciamatura, 400-500Hz), orfanità (bassa frequenza, "lamento"), e ventilazione notturna (asciugatura miele).
     
@@ -159,7 +159,7 @@ Perché è meglio? Perché ora sappiamo **quanto spesso**, **dove finisce il dat
 -   _Nota dominio:_ Un saldo negativo (Uscite > Entrate) prolungato indica moria nei campi (pesticidi) o predatori. Un traffico intenso in entrata indica forte importazione di nettare.
     
 
-**RF-HW-05 — Livello Risorse Idriche** Il device deve misurare la distanza del pelo libero dell'acqua in un serbatoio esterno (secchio) e convertire il dato in percentuale residua.
+**[RF-HW-05 — Livello Risorse Idriche](DOCUMENTAZIONE%20HARDWARE.md#hw-038--rf-hw-05)** Il device deve misurare la distanza del pelo libero dell'acqua in un serbatoio esterno (secchio) e convertire il dato in percentuale residua.
 
 -   _Nota dominio:_ Le api necessitano di molta acqua per termoregolare l'arnia d'estate. Se l'acqua finisce, la colonia rischia il collasso termico.
     
