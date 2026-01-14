@@ -1,10 +1,10 @@
 ## **DOCUMENTAZIONE REQUISITI HARDWARE**
 
-# [ESP32 CAM](TEST%20SENSORI/Esp32%20Cam/Documentazione%20Esp32%20Cam.md)
+# [ESP32 CAM](TEST%20SENSORI/Esp32%20Cam/)
 
-# [SHT21 - HTU21](TEST%20SENSORI/Sensore_SHT21/Documentazione%20Sensore%20SHT21.md)
+# [SHT21 - HTU21](TEST%20SENSORI/Sensore_SHT21/)
 
-# [DS18B20](TEST%20SENSORI/Sensore_DS18B20/Documentazione%20Sensore%20DS18B20.md)
+# [DS18B20](TEST%20SENSORI/Sensore_DS18B20/)
 
 # INMP441
 
@@ -44,7 +44,7 @@ Note Hardware: La linea SD dovrebbe avere una resistenza di pulldown da 100 k\$\
 
 ![Alt Text](https://plexylab.com/web/image/product.image/1571/image_1024/inmp441-sensor-microfono-interfaz-i2s-mems-bajo-consumo-002)
 
-# [FLYING FISH](TEST%20SENSORI/Sensore_FlyingFish/Documentazione%20Sensore%20MH_FF.md)
+# [FLYING FISH](TEST%20SENSORI/Sensore_FlyingFish/)
 
 # HX711 (~40kg)
 
