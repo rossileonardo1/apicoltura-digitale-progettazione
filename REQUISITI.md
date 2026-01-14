@@ -138,8 +138,9 @@ Perché è meglio? Perché ora sappiamo **quanto spesso**, **dove finisce il dat
 ### Requisiti non funzionali
 - **RNF-DB-01 — Retention**: Lo storico misure deve essere conservato per almeno 2 mesi.  
 - **RNF-DB-02 — Misurazione**: Avere misurazioni su richiesta.
-- **RNF-DB-03 — Notifica**: Identificare e segnalare problemi o misurazioni con una notifica.
-- **RNF-DB-04 — Backup**: Backup automatici ogni settimana e successivamente fare pulizia.(evoluzione futura)
+- **RNF-DB-03 — Notifica**: Identificare e segnalare problemi o misurazioni con una notifica:
+	- Ogni volta che un sensore determina un valore viene inviato al server, che, in caso di anomalie con le soglie 				di massimo e di minimo dei campi prestabiliti (temperatura, umidità, ecc.) crea un'apposita notifica caratterizzata dai seguenti attributi: **ID, Titolo, Descrizione, Valore, Arnia, Apiario**.
+	- Dopodichè la notifica verrà inviata al dispositivo dell'utente, che verrà visualizzata con un alert del tipo: **"La temperatura dell'arnia 'X' appartenente all'apiario 'Y' ha SUPERATO la soglia massima!"**.- **RNF-DB-04 — Backup**: Backup automatici ogni settimana e successivamente fare pulizia.(evoluzione futura)
 - **RNF-DB-05 — Salvataggio**: Salvare nel log gli accessi.(evoluzione futura)
 
 📎 Media consigliati (da inserire nel vostro documento):
