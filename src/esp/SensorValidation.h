@@ -138,8 +138,10 @@ enum ErroreTemperatura {
 };
 
 // ============================================================================
-// STRUTTURE (invariate)
+// STRUTTURE
 // ============================================================================
+
+// Configurazione per validazione dati sensore
 struct ConfigValidazioneSensore {
   float rangeMin;
   float rangeMax;
@@ -147,6 +149,14 @@ struct ConfigValidazioneSensore {
   bool richiedeTimestamp;
   float valoreDefault;
   const char* nomeSensore;
+};
+
+// Configurazione sensore caricata dal DB (passata a init_<sensore>)
+struct SensorConfig {
+  float sogliaMin;           // Soglia minima per alert
+  float sogliaMax;           // Soglia massima per alert
+  unsigned long intervallo;  // Intervallo di campionamento in ms
+  bool abilitato;            // Sensore abilitato/disabilitato
 };
 
 struct RisultatoValidazione {
