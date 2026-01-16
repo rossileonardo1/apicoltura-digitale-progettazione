@@ -10,6 +10,8 @@
 
 # [Sensore_FlyingFish](../src/Codice%20di%20test%20per%20SENSORI/Sensore_FlyingFish/)
 
+# [Sensore_Hw-038](../src/Codice%20di%20test%20per%20SENSORI/Sensore_HW-038/)
+
 # [HX711](../src/Codice%20di%20test%20per%20SENSORI/Sensore_HX711/)
 
 # [KY-038](../src/Codice%20di%20test%20per%20SENSORI/Sensore_KY-038/)
