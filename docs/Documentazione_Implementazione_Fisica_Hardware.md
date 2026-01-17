@@ -1,5 +1,4 @@
-
-#  Protocollo di Installazione Hardware: Arnia Digitale
+# Protocollo di Installazione Hardware: Arnia Digitale
 
 Il sistema prevede l'integrazione di sensori di precisione per il monitoraggio ponderale e termo-igrometrico all'interno di una struttura standard.
 
@@ -56,7 +55,7 @@ Il monitoraggio del peso avviene tramite una cella di carico montata a "sandwich
 
 ---
 
-##  Note Tecniche Obbligatorie per il Cablaggio
+## Note Tecniche Obbligatorie per il Cablaggio
 
 ### 1. Resistenze di Pull-up
 * **Sensore DS18B20:** È necessario inserire una resistenza da $4.7k \Omega$ tra il pin DATI (GPIO 13) e il pin 3.3V. Senza questa resistenza, il bus 1-Wire non trasmetterà i dati correttamente.
@@ -68,11 +67,11 @@ Il monitoraggio del peso avviene tramite una cella di carico montata a "sandwich
 
 ### 3. Gestione GPIO Critici
 * **GPIO 2:** Collegato al LED interno, influisce sul boot mode. Assicurarsi che l'HX711 non forzi questo pin a livello basso durante l'avvio.
-* **GPIO 12:** Durante il boot, questo pin non deve essere "High".
+* **GPIO 12:** Durante il boot, questo pin non deve essere "High" (alto).
 
 ---
 
-##  Schema del Circuito di Alimentazione (Hardware Team)
+## Schema del Circuito di Alimentazione (Hardware Team)
 
 * **Ingresso:** Batteria 12V (Caricata dal pannello solare).
 * **Conversione:** Convertitore DC-DC Step-Down tarato a **5.1V**.
@@ -83,26 +82,30 @@ Il monitoraggio del peso avviene tramite una cella di carico montata a "sandwich
 
 ---
 
-##  Lista della Spesa Tecnica
+## Tabella Acquisti Hardware - Arnia Digitale
 
-### 1. Elettronica di Controllo e Potenza
-* **1x Convertitore DC-DC Step-Down (LM2596 o MP1584EN):** Da 12V a 5V.
-* **1x Set di Resistenze da $4.7k \Omega$:** Per pull-up sensori.
-* **1x Breadboard miniaturizzata o PCB millefori (5x7 cm).**
-* **1x Condensatore elettrolitico 100uF 25V:** Per stabilizzazione alimentazione.
+| Elemento da comprare | Modello Specifico / Note Tecniche | Quantità | Costo Unit. (stima) | Costo Tot. (stima) | Link d'acquisto (Esempio) |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Convertitore Step-Down** | MP1584EN (Mini DC-DC 12V to 5V) | 2 pz | € 2,50 | € 5,00 | [Amazon](https://www.amazon.it/s?k=MP1584EN) |
+| **Resistenze Pull-up** | Set Resistenze 4.7k Ohm 1/4W | 1 kit | € 6,00 | € 6,00 | [Amazon](https://www.amazon.it/s?k=resistenze+4.7k+ohm) |
+| **PCB Millefori** | Piastra Prototipazione 5x7 cm | 3 pz | € 2,00 | € 6,00 | [Amazon](https://www.amazon.it/s?k=pcb+millefori) |
+| **Condensatore** | Elettrolitico 100uF 25V | 5 pz | € 0,50 | € 2,50 | [Amazon](https://www.amazon.it/s?k=condensatore+100uf+25v) |
+| **Bulloni Bilancia** | Bulloni INOX M6x30mm con dadi/rondelle | 1 set (4) | € 5,00 | € 5,00 | [Amazon](https://www.amazon.it/s?k=bulloni+m6+inox) |
+| **Viti Scatole/Supporti** | Viti Legno INOX 3.5x16mm | 1 conf. | € 8,00 | € 8,00 | [Amazon](https://www.amazon.it/s?k=viti+legno+inox+3.5x16) |
+| **Piani Bilancia** | Multistrato Fenolico (20mm spessore) | 2 tagli | € 15,00 | € 30,00 | [Brico / Legnameria] |
+| **Fascette** | Fascette Nylon Nere resistenti UV | 1 conf. | € 5,00 | € 5,00 | [Amazon](https://www.amazon.it/s?k=fascette+nere+uv) |
+| **Silicone** | Silicone Acetico Atossico Trasparente | 1 tubo | € 7,00 | € 7,00 | [Amazon](https://www.amazon.it/s?k=silicone+atossico) |
+| **Vernice Protettiva** | Spray Conformal Coating (Isolante PCB) | 1 flacone| € 12,00 | € 12,00 | [Amazon](https://www.amazon.it/s?k=conformal+coating+spray) |
+| **Rete Protezione** | Retina Acciaio Inox maglia <0.5mm | 1 mq/fgl | € 10,00 | € 10,00 | [Amazon](https://www.amazon.it/s?k=rete+acciaio+inox+maglia+fine) |
+| **Cavo Schermato** | Cavo 4 poli schermato (tipo allarme) | 5 metri | € 1,20/m | € 6,00 | [Amazon](https://www.amazon.it/s?k=cavo+4+poli+schermato) |
+| **Cavo Alimentazione** | Cavo Bipolare Rosso/Nero 1.5mmq | 5 metri | € 1,00/m | € 5,00 | [Amazon](https://www.amazon.it/s?k=cavo+bipolare+rosso+nero) |
+| **Guaina Termo** | Kit Guaine Termorestringenti vari diametri | 1 conf. | € 9,00 | € 9,00 | [Amazon](https://www.amazon.it/s?k=guaina+termorestringente) |
+| **Pressacavi Stagni** | Pressacavi IP68 PG7 | 5 pz | € 1,50 | € 7,50 | [Amazon](https://www.amazon.it/s?k=pressacavi+pg7) |
+| **TOTALE STIMATO** | | | | **€ 124,00** | |
 
-### 2. Meccanica e Fissaggio (Acciaio INOX)
-* **4x Bulloni M6x30mm con dadi e rondelle.**
-* **12x Viti da legno INOX (3.5x16mm).**
-* **2x Piastre in multistrato fenolico (spessore 20mm):** Dimensioni 50x50cm.
-* **1x Confezione fascette nere (UV resistenti):** Misure varie.
+---
 
-### 3. Protezione e Isolamento
-* **1x Tubetto silicone acetico atossico.**
-* **1x Spray isolante circuiti o smalto trasparente.**
-* **1x Retina metallica maglia fine (Acciaio/Alluminio):** 10x10cm.
-
-### 4. Cablaggio e Lunghezze Stimate
+## Cablaggio e Lunghezze Stimate
 
 | Collegamento | Tipo di Cavo | Lunghezza Stimata |
 | :--- | :--- | :--- |
