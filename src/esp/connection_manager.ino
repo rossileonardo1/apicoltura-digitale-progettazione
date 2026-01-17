@@ -32,7 +32,7 @@ static bool _manager_inizializzato = false;
 // ============================================================================
 
 // Configurazione server
-struct ServerConfig {
+/*struct ServerConfig {
   char baseUrl[128];
   char apiKey[64];
   int timeout;
@@ -70,7 +70,7 @@ struct ConfigData {
   SensorConfig hx711;
   float calibrationFactor;
   long calibrationOffset;
-};
+};*/
 
 // ============================================================================
 // INIT - Inizializzazione Data Manager

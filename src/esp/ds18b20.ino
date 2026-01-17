@@ -4,14 +4,14 @@
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include "SensorValidation.h" // Assicurati che questo file esista
+#include "SensorValidation.h"
 
 // --- CONFIGURAZIONE HARDWARE ---
 #define ONE_WIRE_BUS 2
 
 static OneWire oneWire(ONE_WIRE_BUS);
 static DallasTemperature sensors(&oneWire);
-static DeviceAddress insideThermometer; // Memorizza l'indirizzo del sensore
+static DeviceAddress insideThermometer;
 
 // --- STATO E PARAMETRI (CONFIGURABILI) ---
 static float _ds18b20_sogliaMin = 30.0f;
@@ -31,13 +31,10 @@ static ConfigValidazioneSensore _configValidazioneTemp = {
   .nomeSensore = "DS18B20"
 };
 
-// --- UTILITY: STAMPA INDIRIZZO (Dal Codice 2) ---
-void printAddress(DeviceAddress deviceAddress) {
-  for (uint8_t i = 0; i < 8; i++) {
-    if (deviceAddress[i] < 16) Serial.print("0");
-    Serial.print(deviceAddress[i], HEX);
-  }
-}
+// ============================================================================
+// UTILITY: STAMPA INDIRIZZO (FORWARD DECLARATION)
+// ============================================================================
+void printAddress(uint8_t* deviceAddress);
 
 // ============================================================================
 // SETUP - Inizializzazione Fisica
@@ -57,7 +54,6 @@ void setup_ds18b20() {
   Serial.print(F("  + Sensori trovati: "));
   Serial.println(deviceCount);
 
-  // Cerca l'indirizzo del primo sensore
   if (!sensors.getAddress(insideThermometer, 0)) {
     Serial.println(F("  ! ERRORE: Impossibile recuperare indirizzo fisico"));
     _ds18b20_inizializzato = false;
@@ -66,11 +62,9 @@ void setup_ds18b20() {
     printAddress(insideThermometer);
     Serial.println();
 
-    // Configurazione risoluzione (12 bit = max precisione)
     sensors.setResolution(insideThermometer, 12);
     sensors.setWaitForConversion(true); 
     
-    // Verifica se in Parasite Power (Dal Codice 2)
     Serial.print(F("  + Modalità alimentazione: "));
     Serial.println(sensors.isParasitePowerMode() ? F("PARASITE") : F("ESTERNA"));
 
@@ -80,10 +74,13 @@ void setup_ds18b20() {
 }
 
 // ============================================================================
-// INIT - Configurazione Parametri (Dal Server/DB)
+// INIT - Configurazione Parametri
 // ============================================================================
 void init_ds18b20(SensorConfig* config) {
-  if (config == NULL) return;
+  if (config == NULL) {
+    Serial.println("  ! DS18B20: config NULL, uso valori default");
+    return;
+  }
 
   _ds18b20_sogliaMin = config->sogliaMin;
   _ds18b20_sogliaMax = config->sogliaMax;
@@ -91,7 +88,11 @@ void init_ds18b20(SensorConfig* config) {
   _ds18b20_abilitato = config->abilitato;
   _ds18b20_contatore = 0;
 
-  Serial.println(F("  --- Configurazione Software Aggiornata ---"));
+  Serial.println(F("  --- Config DS18B20 caricata ---"));
+  Serial.print("    Soglia MIN: "); Serial.print(_ds18b20_sogliaMin); Serial.println(" °C");
+  Serial.print("    Soglia MAX: "); Serial.print(_ds18b20_sogliaMax); Serial.println(" °C");
+  Serial.print("    Intervallo: "); Serial.print(_ds18b20_intervallo / 1000); Serial.println(" sec");
+  Serial.print("    Abilitato: "); Serial.println(_ds18b20_abilitato ? "SI" : "NO");
 }
 
 // ============================================================================
@@ -103,28 +104,28 @@ RisultatoValidazione read_temperature_ds18b20() {
   risultato.valorePulito = _configValidazioneTemp.valoreDefault;
   risultato.timestamp = millis();
 
-  // 1. Controllo se il sensore è disabilitato
+  // 1. Controllo se disabilitato
   if (!_ds18b20_abilitato) {
     risultato.codiceErrore = ERR_SENSOR_OFFLINE;
-    strncpy(risultato.messaggioErrore, "Sensore disabilitato", sizeof(risultato.messaggioErrore));
+    strncpy(risultato.messaggioErrore, "[DS18B20] Sensore disabilitato", sizeof(risultato.messaggioErrore));
     return risultato;
   }
 
-  // 2. Controllo se inizializzato correttamente
+  // 2. Controllo se inizializzato
   if (!_ds18b20_inizializzato) {
     risultato.codiceErrore = ERR_SENSOR_NOT_READY;
-    strncpy(risultato.messaggioErrore, "HW non inizializzato", sizeof(risultato.messaggioErrore));
+    strncpy(risultato.messaggioErrore, "[DS18B20] HW non inizializzato", sizeof(risultato.messaggioErrore));
     return risultato;
   }
 
-  // 3. Lettura Fisica (Logica Codice 2)
+  // 3. Lettura fisica
   sensors.requestTemperatures(); 
   float tempC = sensors.getTempC(insideThermometer);
 
-  // 4. Controllo connessione fisica (DEVICE_DISCONNECTED_C = -127)
+  // 4. Controllo connessione fisica
   bool isConnected = (tempC != DEVICE_DISCONNECTED_C);
 
-  // 5. Validazione Logica (Range, NaN, ecc. tramite SensorValidation.h)
+  // 5. Validazione con SensorValidation.h
   risultato = validaDatoSensore(
     tempC, 
     risultato.timestamp, 
@@ -132,25 +133,45 @@ RisultatoValidazione read_temperature_ds18b20() {
     _configValidazioneTemp
   );
 
-  // 6. Controllo Soglie e Alert
+  // 6. Controllo soglie se valido
   if (risultato.valido) {
-    // Questa funzione verifica se il dato è fuori dai limiti min/max
-    // e internamente può gestire l'invio di notifiche
-    verificaSoglie(risultato.valorePulito, _ds18b20_sogliaMin, _ds18b20_sogliaMax, "DS18B20");
+    int alertCode = verificaSoglie(risultato.valorePulito, _ds18b20_sogliaMin, _ds18b20_sogliaMax, "DS18B20");
+    
+    // Se c'è un alert, aggiorna il codice errore ma mantieni valido=true
+    if (alertCode != STATUS_OK) {
+      risultato.codiceErrore = alertCode;
+    }
+    
     _ds18b20_contatore++;
     
-    // Debug opzionale
     Serial.print(F("[DS18B20] Temperatura: "));
     Serial.print(risultato.valorePulito);
     Serial.println(F(" °C"));
   } else {
-    Serial.print(F("! Errore Lettura: "));
+    Serial.print(F("! Errore Lettura DS18B20: "));
     Serial.println(risultato.messaggioErrore);
   }
 
   return risultato;
 }
 
-// Getters per il loop principale
-unsigned long get_intervallo_ds18b20() { return _ds18b20_intervallo; }
-bool is_abilitato_ds18b20() { return _ds18b20_abilitato; }
+// ============================================================================
+// UTILITY: STAMPA INDIRIZZO (IMPLEMENTAZIONE)
+// ============================================================================
+void printAddress(uint8_t* deviceAddress) {
+  for (uint8_t i = 0; i < 8; i++) {
+    if (deviceAddress[i] < 16) Serial.print("0");
+    Serial.print(deviceAddress[i], HEX);
+  }
+}
+
+// ============================================================================
+// GETTERS
+// ============================================================================
+unsigned long get_intervallo_ds18b20() { 
+  return _ds18b20_intervallo; 
+}
+
+bool is_abilitato_ds18b20() { 
+  return _ds18b20_abilitato; 
+}

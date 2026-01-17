@@ -2,6 +2,7 @@
 
 
 
+
 # Documentazione ESP32 Logic
 
 Versione 1.0
@@ -12,18 +13,20 @@ Il Gruppo C realizza il firmware per il dispositivo (ESP32-CAM + sensori) e la l
 
 ## Giornaliero
 
-### Giorno 1 (12/01/25)
+### Giorno 1 (12/01/26)
 Incontro con apicoltore e primo brainstorming con stesura appunti. Visita esperto architetto del software 
 
-### Giorno 2 (13/01/25)
+### Giorno 2 (13/01/26)
 Introduzione a GitHub, unione alla repository di progettazione e creazione branch del gruppo C, stesura requisiti e trasferimento di essi sul file REQUISITI.md nella cartella condivisa. 
 
-### Giorno 3 (14/01/25)
+### Giorno 3 (14/01/26)
 Incontro con architetto del software, correzione dei requisiti funzionali e stesura documentazione di logica ESP32 e i relativi sensori. 
 
-### Giorno 4 (15/01/25)
+### Giorno 4 (15/01/26)
 Creazione Tabella dei Pin di ogni sensore nei confronti dell'ESP32, aggiornati i cicli di misurazione per standardizzarne la nomenclatura e completarne il significato
 
+### Giorno 5 (16/01/26)
+Completamento codici , aggiornamento documentazione con aggiunta commenti codici e cambiamento di errori/alert. 
 # Scope
 -   Lettura e processing dei sensori definiti dal progetto (SHT21, DS18B20, HX711, INMP441, HW-038, fotocamera).
 -   Formattazione dei dati in payload JSON e invio agli endpoint REST esposti dal server (POST misure, POST 	foto, GET comandi).
@@ -52,9 +55,10 @@ Creazione Tabella dei Pin di ogni sensore nei confronti dell'ESP32, aggiornati i
 - **RF-SW-13 — PS, Gestione ora**: Ad ogni misurazione deve essere associata un orario. 
 - **RF-SW-14 — MIC, Acquisizione continua**: Il microfono deve acquisire il segnale a intervalli di 10 secondi.
 - **RF-SW-15 — MIC, Intensità suono**: Si calcola il volume medio in dB per capire l'agitazione dello sciame.
-- **RF-SW-16 — MIC, Frequenza suono**: Si calcola la frequenza per avere una misura più precisa dello stato dello sciame.
+- **RF-SW-16 — MIC, Frequenza suono**: Calcolo frequenza per stato sciame.
 - **RF-SW-17 — MIC, Verifica soglia**:  Il microfono confronta i valori rilevati con valori di allarme.
 - **RF-SW-18 — MIC, Notifica alert**: Se si supera una certa soglia l'apicoltore riceve una notifica.
+- **RF-SW-18.5 — MIC, Timestamp**: 6 misurazioni accumulate, invio con timestamp.
 - **RF-SW-19 — UM, Misurazione umidità come % nell'aria**: Il sensore misura la percentuale di umidità all'interno dell'arnia.
 - **RF-SW-20 — UM, Tipo di dato**: Il valore del sensore è ospitato in una variabile float. 
 - **RF-SW-21 — UM, Timestamp**: Ad ogni misurazione è associata la data e l'ora di esecuzione (formato dd/MM/yyyy; hh:mm).
@@ -122,187 +126,179 @@ Creazione Tabella dei Pin di ogni sensore nei confronti dell'ESP32, aggiornati i
         -   B+ / B− → canale B (di solito non usato)
 
 
+# Lista Errori e alert sensori
 
-#Lista Errori e alert sensori
-
-##Sensore utilizzato: DS18B20 (Sensore Temperatura)
+## Sensore utilizzato: DS18B20 (Sensore Temperatura)
 
 ### 1.1 Acquisizione dati
 
 -   Lettura del valore di temperatura (float, °C).
+    
 -   Generazione del timestamp associato.
--   Riferimenti:  `RF-SW-01`,  `RF-SW-02`.
-
+    
+-   Riferimenti: `RF-SW-01`, `RF-SW-02`.
+    
 ### 1.2 Verifica integrità del dato
 
--   Controllo che il valore non sia nullo (non presente).
-
+-   **ERR_DATA_NULL**: Controllo che il valore non sia nullo (non presente).
+    
 ### 1.3 Verifica intervallo sensore
 
--   Controllo che il valore sia entro il range operativo previsto dal sensore; se fuori range trattare come dato non valido.
-
+-   **ERR_MEASURE_OUT_OF_RANGE**: Controllo che il valore sia entro il range operativo previsto dal sensore; se fuori range trattare come dato non valido.
+    
 ### 1.4 Verifica stato sensore
 
--   Controllo se il sensore è offline o non risponde.
-
+-   **ERR_SENSOR_OFFLINE**: Controllo se il sensore è offline o non risponde.
+    
 ### 1.5 Salvataggio su memoria locale
 
 -   Se il dato è valido, memorizzazione permanente su ESP32.
--   Riferimento:  `RNF-SW-01`.
-
+    
+-   Riferimento: `RNF-SW-01`.
+    
 ### 1.6 Verifica connettività verso il database
 
--   Controllo della disponibilità di rete e del database remoto.
--   Riferimento:  `RNF-SW-01`.
-
+-   **ERR_NETWORK_OFFLINE**: Controllo della disponibilità di rete e del database remoto.
+    
+-   Riferimento: `RNF-SW-01`.
+    
 ### 1.7 Sincronizzazione Cloud/DB
 
--   Se la connessione è disponibile, upload del valore e del relativo timestamp al cloud/DB.
--   Riferimenti:  `RF-SW-03`,  `RF-SW-04`.
-
+-   **ERR_UPLOAD_FAILED**: Se la connessione è disponibile, upload del valore e del relativo timestamp al cloud/DB.
+    
+-   Riferimenti: `RF-SW-03`, `RF-SW-04`.
+    
 ### 1.8 Controllo soglia massima
 
 -   Verifica se la temperatura supera la SogliaMax.
--   Riferimento:  `RF-SW-05`.
-
+    
+-   Riferimento: `RF-SW-05`.
+    
 ### 1.9 Alert per superamento soglia massima
 
--   Se la temperatura > SogliaMax, invio di notifica/alert per condizione critica alta.
-
+-   **ALERT_THRESHOLD_HIGH**: Se la temperatura > SogliaMax, invio di notifica per condizione critica alta.
+    
 ### 1.10 Controllo soglia minima
 
 -   Verifica se la temperatura è inferiore alla SogliaMin.
--   Riferimento:  `RF-SW-06`.
-
+    
+-   Riferimento: `RF-SW-06`.
+    
 ### 1.11 Alert per superamento soglia minima
 
--   Se la temperatura < SogliaMin, invio di notifica/alert per condizione critica bassa.
-
+-   **ALERT_THRESHOLD_LOW**: Se la temperatura < SogliaMin, invio di notifica per condizione critica bassa.
+    
 ### 1.12 Intervallo di campionamento
 
--   Attesa controllata di 6 minuti prima del prossimo ciclo.
--   Riferimento:  `RF-SW-07`.
-
+-   **REQ_PROCESS_CYCLE**: Attesa controllata di 6 minuti prima del prossimo ciclo (requisito di processo).
+    
+-   Riferimento: `RF-SW-07`.
+    
 ### 1.13 Tentativo di ripristino dati accumulati
 
--   Se la connessione ritorna disponibile, tentativo di upload dei dati locali memorizzati su ESP32.
--   Riferimento:  `RNF-SW-01`.
-
+-   **ERR_UPLOAD_RETRY_EXHAUSTED**: Se la connessione ritorna disponibile, tentativo di upload dei dati memorizzati.
+    
+-   Riferimento: `RNF-SW-01`.
+    
 ### 1.14 Chiusura loop
 
 -   Ripartenza del ciclo tornando al punto 1.1.
-
-##Sensore utilizzato: HX711 (Peso)
+    
+## Sensore utilizzato: HX711 (Peso)
 
 ### 2.1 Lettura ADC non pronta
 
--   **ERR-PS-2.01**  — Lettura ADC non pronta  
-    Lettura del valore a 24 bit effettuata quando l’ADC non ha ancora un campione valido (“data not ready”); il dato ottenuto è inattendibile.
-
+-   **ERR_SENSOR_NOT_READY**: Lettura effettuata quando l’ADC non ha ancora un campione valido.
+    
 ### 2.2 Timeout acquisizione
 
--   **ERR-PS-2.02**  — Timeout acquisizione  
-    Entro il tempo massimo previsto il campione non viene acquisito (ADC non risponde o il campione non arriva); la misura viene persa.
-
+-   **ERR_SENSOR_TIMEOUT**: Entro il tempo massimo previsto il campione non viene acquisito.
+    
 ### 2.3 Saturazione ADC
 
--   **ERR-PS-2.03**  — Saturazione ADC  
-    Il valore letto rimane fisso al minimo o al massimo (es. sempre 0 oppure full-scale), indicando una misura non valida da scartare.
-
+-   **ERR_PS_ADC_SATURATION**: Valore fisso al minimo o al massimo (fondo scala); misura non valida.
+    
 ### 2.4 Valore instabile (rumore alto)
 
--   **ERR-PS-2.04**  — Valore instabile (rumore alto)  
-    Durante la finestra di misura i campioni oscillano oltre la soglia di stabilità prevista, rendendo il valore non affidabile.
-
+-   **ERR_MEASURE_UNSTABLE**: I campioni oscillano oltre la soglia di stabilità prevista.
+    
 ### 2.5 Outlier improvviso
 
--   **ERR-PS-2.05**  — Outlier improvviso  
-    Uno o pochi campioni risultano molto distanti dagli altri (picchi); questi devono essere ignorati o filtrati.
-
+-   **ERR_MEASURE_UNSTABLE**: Picchi improvvisi distanti dalla media; ignorare o filtrare.
+    
 ### 2.6 Taratura non presente
 
--   **ERR-PS-2.06**  — Taratura non presente  
-    Mancano i parametri necessari (offset o coefficiente) per convertire il dato grezzo in kg.
-
+-   **ERR_PS_CALIB_MISSING**: Mancano i parametri (offset/coefficiente) per la conversione.
+    
 ### 2.7 Taratura non valida
 
--   **ERR-PS-2.07**  — Taratura non valida  
-    I parametri di taratura risultano incoerenti o fuori dall'intervallo plausibile; la conversione in kg è inaffidabile.
-
+-   **ERR_PS_CALIB_INVALID**: Parametri di taratura incoerenti o fuori intervallo plausibile.
+    
 ### 2.8 Errore conversione in kg
 
--   **ERR-PS-2.08**  — Errore conversione in kg  
-    La trasformazione da valore grezzo a kg produce un valore non valido (NaN, infinito) o fuori scala.
-
+-   **ERR_PS_CONVERSION_FAIL**: La trasformazione produce un valore non valido (`NaN`, `Inf`).
+    
 ### 2.9 Peso fuori range min/max
 
--   **ERR-PS-2.09**  — Peso fuori range min/max  
-    Il peso calcolato in kg è inferiore al minimo o superiore al massimo configurato; la misura viene scartata.
-
+-   **ERR_MEASURE_OUT_OF_RANGE**: Peso calcolato superiore o inferiore ai limiti configurati.
+    
 ### 2.10 Peso negativo
 
--   **ERR-PS-2.10**  — Peso negativo  
-    Dopo tara o taratura il peso risulta negativo oltre la tolleranza prevista; indica misura non valida.
-
+-   **ERR_DATA_NEGATIVE_NOT_ALLOWED**: Peso negativo oltre la tolleranza; indica misura non valida.
+    
 ### 2.11 Prima misura non stabile dopo wake-up
 
--   **ERR-PS-2.11**  — Prima misura non stabile dopo wake-up  
-    Le prime letture dopo avvio o risveglio dal deep sleep risultano instabili e devono essere scartate.
-
+-   **ERR_MEASURE_UNSTABLE**: Letture post-risveglio instabili da scartare (settling time).
+    
 ### 2.12 Timestamp mancante
 
--   **ERR-PS-2.12**  — Timestamp mancante  
-    Alla misura non viene associata data/ora; il dato non è correttamente tracciabile.
-
+-   **ERR_TIMESTAMP_INVALID**: Alla misura non viene associata data/ora.
+    
 ### 2.13 Timestamp non valido
 
--   **ERR-PS-2.13**  — Timestamp non valido  
-    Data o ora associate alla misura non sono plausibili (es. valori di default), causando incoerenza nello storico.
-
+-   **ERR_TIMESTAMP_INVALID**: Data o ora non plausibili (es. 1970-01-01).
+    
 ### 2.14 Invio fallito
 
--   **ERR-PS-2.14**  — Invio fallito  
-    Il sistema non riesce a inviare o salvare la misura sul server; gestire retry o salvataggio locale.
-
+-   **ERR_UPLOAD_FAILED**: Impossibile inviare al server; gestire retry o salvataggio locale.
+    
 ### 2.15 Duplicazione misura
 
--   **ERR-PS-2.15**  — Duplicazione misura  
-    La stessa misura viene inviata più volte, generando duplicazioni per assenza di controllo di unicità.
-
-##Sensore utilizzato: SHT21 - HTU21 (umidità)
+-   **ERR_DATA_DUPLICATE**: Stessa misura inviata più volte (mancanza controllo unicità).
+  
+## Sensore utilizzato: SHT21 - HTU21 (umidità)
 
 ### 3.1 Impossibile rilevare il sensore dell'umidità
 
--   Il sensore non è presente o non risponde all'inizializzazione.
-
+-   **ERR_SENSOR_OFFLINE**: Il sensore non risponde all'inizializzazione.
+    
 ### 3.2 Impossibile ottenere informazioni sull'umidità
 
--   Il sensore risponde ma non fornisce valori validi.
-
+-   **ERR_DATA_INVALID_NUMBER**: Il sensore risponde ma fornisce valori non numerici.
+    
 ### 3.3 Verifica integrità del dato (non nullo)
 
--   Ogni misura deve fornire un valore numerico valido (non NULL).
-
+-   **ERR_DATA_NULL**: Controllo che la misura non sia nulla.
+    
 ### 3.4 Verifica integrità del dato (non negativo)
 
--   L’umidità, nella logica applicativa, non deve assumere valori negativi.
-
+-   **ERR_DATA_NEGATIVE_NOT_ALLOWED**: L’umidità non deve assumere valori negativi.
+    
 ### 3.5 Verifica tipo dato (float)
 
--   Il tipo di dato per l’umidità deve essere floating point per preservare precisione decimale.
-
+-   **ERR_HUM_FLOAT_CONSTRAINT**: Vincolo: il dato deve essere floating point per la precisione.
+   
 ### 3.6 Verifica stato dispositivo (ESP32 offline)
 
--   Caso in cui la board non è connessa o non è alimentata; gestire salvataggio locale e retry di connessione.
-
+-   **ERR_NETWORK_OFFLINE**: Board non connessa; gestire salvataggio locale e retry.
+    
 ### 3.7 Controllo soglia massima (umidità troppo alta)
 
--   Condizione che deve innescare un allarme/azione secondo le soglie definite.
+-   **ALERT_THRESHOLD_HIGH**: Allarme per superamento soglia massima definita.
 
 ### 3.8 Controllo soglia minima (umidità troppo bassa)
 
--   Condizione che deve innescare un allarme/azione secondo le soglie definite.
-
+-   **ALERT_THRESHOLD_LOW**: Allarme per superamento soglia minima definita.
 
 ## Consumi sensori
 
@@ -338,3 +334,82 @@ Creazione Tabella dei Pin di ogni sensore nei confronti dell'ESP32, aggiornati i
 -   DS18B20: ~**0,004–0,005 mA**
 -   HX711 chip: ~ **~0,001 mA o meno**
 -   Cella di carico:  **3–15 mA** 
+
+# Codice
+## JSON
+### Inviato al server
+Dato per il database
+
+**Senza alert:**
+```json
+{  
+	"macAddress": "AA:BB:CC: DD:EE: FF",  
+	"tipoSensore": "temperatura_interna",  
+	"idSensore": "DS18B20_001",  
+	"valore": 34.75,  
+	"unita": "C",  
+	"timestamp": 1234567890,  
+	"codiceStato": 9000,  
+	"alert": false  
+}
+```
+**Con alert:**
+```json
+{  
+	"macAddress": "AA:BB:CC: DD:EE: FF",  
+	"tipoSensore": "temperatura_interna",  
+	"idSensore": "DS18B20_001",  
+	"valore": 34.75,  
+	"unita": "C",  
+	"timestamp": 1234567890,  
+	"codiceStato": 9000,  
+	"alert": true,
+	"alertTipo": "HIGH"
+}
+```
+### Ricevuto dal server
+JSON di configurazione
+```json
+{  
+	"macAddress": "AA: BB:CC:DD:EE:FF",  
+	"ds18b20": {  
+	"sogliaMin": 30.0,  
+	"sogliaMax": 37.0,  
+	"intervallo": 360000,  
+	"abilitato": true  
+},  
+	"sht21_humidity": {  
+	"sogliaMin": 40.0,  
+	"sogliaMax": 70.0,  
+	"intervallo": 360000,  
+	"abilitato": true  
+},  
+	"sht21_temperature": {  
+	"sogliaMin": 10.0,  
+	"sogliaMax": 45.0,  
+	"intervallo": 360000,  
+	"abilitato": true  
+},  
+	"hx711": {  
+	"sogliaMin": 10.0,  
+	"sogliaMax": 80.0,  
+	"intervallo": 10800000,  
+	"abilitato": true  
+},  
+	"calibrationFactor": 2280.0,  
+	"calibrationOffset": 50000  
+}
+
+```
+
+### Stima precisa del consumo (HTTP No-SSL)
+
+Con una frequenza di 10 invii/ora, ecco come si comportano i dati:
+
+-   **Dati per singolo invio:** ~450 byte (Header HTTP + JSON leggero + Risposta server).
+    
+-   **Dati ogni ora:** $450 \text{ byte} \times 10 = 4.5 \text{ KB}$.
+    
+-   **Dati al giorno:** $4.5 \text{ KB} \times 24 = 108 \text{ KB}$.
+    
+-   **Dati al mese (30 gg):** $108 \text{ KB} \times 30 = \mathbf{3.24 \text{ MB}}$.

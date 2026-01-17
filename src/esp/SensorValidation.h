@@ -52,13 +52,10 @@ enum ErroreComune {
 // ENUM ALERT (CATEGORIA 2XXX)
 // ============================================================================
 enum Alert {
-  // 20XX - Soglie
   ALERT_THRESHOLD_LOW = 2001,
   ALERT_THRESHOLD_HIGH = 2002,
   ALERT_THRESHOLD_CRITICAL_LOW = 2003,
   ALERT_THRESHOLD_CRITICAL_HIGH = 2004,
-  
-  // 21XX - Qualità
   ALERT_DATA_QUALITY_LOW = 2101,
   ALERT_OUTLIER_DETECTED = 2102,
   ALERT_DRIFT_DETECTED = 2103
@@ -69,25 +66,17 @@ enum Alert {
 // ============================================================================
 enum ErrorePeso {
   ERR_PS_NONE = 0,
-  
-  // 30XX - ADC
   ERR_PS_ADC_SATURATION_LOW = 3001,
   ERR_PS_ADC_SATURATION_HIGH = 3002,
   ERR_PS_ADC_SATURATION = 3003,
   ERR_PS_ADC_READ_FAILED = 3004,
-  
-  // 31XX - Calibrazione
   ERR_PS_CALIBRATION_MISSING = 3101,
   ERR_PS_CALIBRATION_INVALID = 3102,
   ERR_PS_CALIBRATION_EXPIRED = 3103,
   ERR_PS_TARE_FAILED = 3104,
-  
-  // 32XX - Conversione
   ERR_PS_CONVERSION_FAILED = 3201,
   ERR_PS_CONVERSION_OVERFLOW = 3202,
   ERR_PS_CONVERSION_UNDERFLOW = 3203,
-  
-  // 33XX - Load Cell
   ERR_PS_LOADCELL_FAULT = 3301,
   ERR_PS_LOADCELL_OVERLOAD = 3302
 };
@@ -97,17 +86,11 @@ enum ErrorePeso {
 // ============================================================================
 enum ErroreUmidita {
   ERR_HUM_NONE = 0,
-  
-  // 40XX - Lettura sensore
   ERR_HUM_SENSOR_FAULT = 4001,
   ERR_HUM_I2C_COMM_FAILED = 4002,
   ERR_HUM_CHECKSUM_ERROR = 4003,
-  
-  // 41XX - Validazione
   ERR_HUM_NOT_FLOAT = 4101,
   ERR_HUM_PRECISION_LOSS = 4102,
-  
-  // 42XX - Alert condizioni
   ALERT_HUM_CONDENSATION_RISK = 4201,
   ALERT_HUM_TOO_DRY = 4202
 };
@@ -117,31 +100,33 @@ enum ErroreUmidita {
 // ============================================================================
 enum ErroreTemperatura {
   ERR_TEMP_NONE = 0,
-  
-  // 50XX - Lettura sensore
   ERR_TEMP_SENSOR_DISCONNECTED = 5001,
   ERR_TEMP_CRC_ERROR = 5002,
   ERR_TEMP_ONEWIRE_FAILED = 5003,
-  
-  // 51XX - Processo
   ERR_TEMP_SAMPLING_INTERVAL = 5101,
   ERR_TEMP_CONVERSION_TIMEOUT = 5102,
   ERR_TEMP_RESOLUTION_ERROR = 5103,
-  
-  // 52XX - Storage
   ERR_TEMP_STORAGE_FULL = 5201,
   ERR_TEMP_SYNC_FAILED = 5202,
-  
-  // 53XX - Alert
   ALERT_TEMP_FREEZE_RISK = 5301,
   ALERT_TEMP_OVERHEAT = 5302
+};
+
+// ============================================================================
+// ENUM LEGACY (per compatibilità con esp. ino)
+// ============================================================================
+enum ErrorLegacy {
+  ERROR_NONE = 0,
+  ERROR_SENSOR_NOT_FOUND = 1204,      // Mappa a ERR_SENSOR_DISCONNECTED
+  ERROR_READ_FAILED = 1202,           // Mappa a ERR_SENSOR_TIMEOUT
+  ERROR_OUT_OF_RANGE = 1101,          // Mappa a ERR_MEASURE_OUT_OF_RANGE
+  ERROR_SPIKE_DETECTED = 1303         // Mappa a ERR_MEASURE_OUTLIER
 };
 
 // ============================================================================
 // STRUTTURE
 // ============================================================================
 
-// Configurazione per validazione dati sensore
 struct ConfigValidazioneSensore {
   float rangeMin;
   float rangeMax;
@@ -151,137 +136,136 @@ struct ConfigValidazioneSensore {
   const char* nomeSensore;
 };
 
-// Configurazione sensore caricata dal DB (passata a init_<sensore>)
 struct SensorConfig {
-  float sogliaMin;           // Soglia minima per alert
-  float sogliaMax;           // Soglia massima per alert
-  unsigned long intervallo;  // Intervallo di campionamento in ms
-  bool abilitato;            // Sensore abilitato/disabilitato
+  float sogliaMin;
+  float sogliaMax;
+  unsigned long intervallo;
+  bool abilitato;
 };
 
 struct RisultatoValidazione {
   bool valido;
-  int codiceErrore;  // ← Cambiato da ErroreComune a int per gestire tutti i tipi
+  int codiceErrore;
   float valorePulito;
   char messaggioErrore[80];
+  unsigned long timestamp;  // AGGIUNTO:  mancava nel tuo codice originale
+};
+
+struct ServerConfig {
+  char baseUrl[128];
+  char apiKey[64];
+  int timeout;
+};
+
+// Valore sensore da salvare
+struct SensorData {
+  char macAddress[18];
+  char tipoSensore[32];
+  char idSensore[32];
+  float valore;
+  char unita[8];
+  unsigned long timestamp;
+  int codiceStato;
+  bool alert;
+  char alertTipo[16];
+};
+
+// Notifica/Log
+struct NotificationData {
+  char macAddress[18];
+  char tipoSensore[32];
+  float valoreRiferimento;
+  unsigned long timestamp;
+  char messaggio[128];
+  int livello;  // 0=INFO, 1=WARNING, 2=ERROR, 3=CRITICAL
+};
+
+// Risposta configurazione
+struct ConfigData {
+  bool success;
+  SensorConfig ds18b20;
+  SensorConfig sht21_humidity;
+  SensorConfig sht21_temperature;
+  SensorConfig hx711;
+  float calibrationFactor;
+  long calibrationOffset;
 };
 
 // ============================================================================
-// FUNZIONI HELPER PER DESCRIZIONE ERRORI
+// FUNZIONI HELPER
 // ============================================================================
 
-const char* getErroreDescrizione(int codiceErrore) {
+inline const char* getErroreDescrizione(int codiceErrore) {
   switch(codiceErrore) {
-    // Status OK
     case 9000: return "OK";
     case 9001: return "OK con warning";
-    
-    // 10XX - Dato
     case 1001: return "Dato nullo/mancante";
     case 1002: return "Dato NaN o Infinito";
     case 1003: return "Dato negativo non ammesso";
     case 1004: return "Formato dato errato";
-    
-    // 11XX - Range
     case 1101: return "Misura fuori range";
     case 1102: return "Misura sotto minimo";
     case 1103: return "Misura sopra massimo";
-    
-    // 12XX - Sensore
     case 1201: return "Sensore non pronto";
     case 1202: return "Timeout sensore";
     case 1203: return "Sensore offline";
     case 1204: return "Sensore disconnesso";
-    
-    // 13XX - Qualità
     case 1301: return "Misura instabile";
     case 1302: return "Rumore eccessivo";
     case 1303: return "Outlier rilevato";
     case 1304: return "Sensore in warm-up";
-    
-    // 14XX - Timestamp
     case 1401: return "Timestamp non valido";
     case 1402: return "Timestamp futuro";
     case 1403: return "Timestamp duplicato";
-    
-    // 15XX - Network
     case 1501: return "Rete offline";
     case 1502: return "Timeout rete";
     case 1503: return "DB non raggiungibile";
     case 1504: return "Upload fallito";
     case 1505: return "Retry esauriti";
     case 1506: return "Misura duplicata";
-    
-    // 20XX - Alert soglie
     case 2001: return "Alert soglia bassa";
     case 2002: return "Alert soglia alta";
     case 2003: return "Alert critico basso";
     case 2004: return "Alert critico alto";
-    
-    // 21XX - Alert qualità
     case 2101: return "Qualità dato bassa";
     case 2102: return "Outlier rilevato";
     case 2103: return "Deriva sensore";
-    
-    // 30XX - Peso ADC
     case 3001: return "ADC saturo basso";
     case 3002: return "ADC saturo alto";
     case 3003: return "ADC saturo";
     case 3004: return "Lettura ADC fallita";
-    
-    // 31XX - Peso Calibrazione
     case 3101: return "Calibrazione mancante";
     case 3102: return "Calibrazione non valida";
     case 3103: return "Calibrazione scaduta";
     case 3104: return "Tara fallita";
-    
-    // 32XX - Peso Conversione
     case 3201: return "Conversione kg fallita";
     case 3202: return "Overflow conversione";
     case 3203: return "Underflow conversione";
-    
-    // 33XX - Peso Load Cell
     case 3301: return "Guasto load cell";
     case 3302: return "Sovraccarico load cell";
-    
-    // 40XX - Umidità Sensore
     case 4001: return "Errore hardware sensore";
     case 4002: return "I2C fallito";
     case 4003: return "Errore checksum";
-    
-    // 41XX - Umidità Validazione
     case 4101: return "Dato non float";
     case 4102: return "Perdita precisione";
-    
-    // 42XX - Umidità Alert
     case 4201: return "Rischio condensa";
     case 4202: return "Aria troppo secca";
-    
-    // 50XX - Temperatura Sensore
     case 5001: return "DS18B20 disconnesso";
     case 5002: return "Errore CRC";
     case 5003: return "OneWire fallito";
-    
-    // 51XX - Temperatura Processo
     case 5101: return "Intervallo non rispettato";
     case 5102: return "Timeout conversione";
     case 5103: return "Errore risoluzione";
-    
-    // 52XX - Temperatura Storage
     case 5201: return "Storage pieno";
     case 5202: return "Sync fallita";
-    
-    // 53XX - Temperatura Alert
     case 5301: return "Rischio congelamento";
     case 5302: return "Surriscaldamento";
-    
     default: return "Errore sconosciuto";
   }
 }
 
-const char* getErroreCategoria(int codiceErrore) {
+inline const char* getErroreCategoria(int codiceErrore) {
   int categoria = codiceErrore / 1000;
-  
   switch(categoria) {
     case 1: return "ERRORE_COMUNE";
     case 2: return "ALERT";
@@ -294,10 +278,10 @@ const char* getErroreCategoria(int codiceErrore) {
 }
 
 // ============================================================================
-// FUNZIONI DI VALIDAZIONE (aggiornate con nuovi ID)
+// FUNZIONE VALIDAZIONE CENTRALE
 // ============================================================================
 
-RisultatoValidazione validaDatoSensore(
+inline RisultatoValidazione validaDatoSensore(
   float valoreGrezzo,
   unsigned long timestamp,
   bool sensoreReady,
@@ -307,100 +291,80 @@ RisultatoValidazione validaDatoSensore(
   risultato.valido = true;
   risultato.codiceErrore = STATUS_OK;
   risultato.valorePulito = valoreGrezzo;
+  risultato.timestamp = timestamp;
   strcpy(risultato.messaggioErrore, "OK");
   
-  // 1) SENSORE NON PRONTO
-  if (! sensoreReady) {
+  if (!sensoreReady) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_SENSOR_NOT_READY;
     risultato.valorePulito = config.valoreDefault;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s", 
-             config.nomeSensore, 
-             ERR_SENSOR_NOT_READY,
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s", 
+             config.nomeSensore, ERR_SENSOR_NOT_READY,
              getErroreDescrizione(ERR_SENSOR_NOT_READY));
     return risultato;
   }
   
-  // 2) DATO NaN
   if (isnan(valoreGrezzo)) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_DATA_INVALID_NUMBER;
     risultato.valorePulito = config.valoreDefault;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s (NaN)", 
-             config. nomeSensore,
-             ERR_DATA_INVALID_NUMBER,
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s (NaN)", 
+             config.nomeSensore, ERR_DATA_INVALID_NUMBER,
              getErroreDescrizione(ERR_DATA_INVALID_NUMBER));
     return risultato;
   }
   
-  // 3) DATO INFINITO
   if (isinf(valoreGrezzo)) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_DATA_INVALID_NUMBER;
     risultato.valorePulito = config.valoreDefault;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s (Inf)", 
-             config.nomeSensore,
-             ERR_DATA_INVALID_NUMBER,
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s (Inf)", 
+             config.nomeSensore, ERR_DATA_INVALID_NUMBER,
              getErroreDescrizione(ERR_DATA_INVALID_NUMBER));
     return risultato;
   }
   
-  // 4) NEGATIVO NON AMMESSO
   if (! config.permettiNegativi && valoreGrezzo < 0.0f) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_DATA_NEGATIVE_NOT_ALLOWED;
     risultato.valorePulito = config.valoreDefault;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s:  %. 2f", 
-             config.nomeSensore,
-             ERR_DATA_NEGATIVE_NOT_ALLOWED,
-             getErroreDescrizione(ERR_DATA_NEGATIVE_NOT_ALLOWED),
-             valoreGrezzo);
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s:  %. 2f", 
+             config.nomeSensore, ERR_DATA_NEGATIVE_NOT_ALLOWED,
+             getErroreDescrizione(ERR_DATA_NEGATIVE_NOT_ALLOWED), valoreGrezzo);
     return risultato;
   }
   
-  // 5) FUORI RANGE
   if (valoreGrezzo < config.rangeMin || valoreGrezzo > config.rangeMax) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_MEASURE_OUT_OF_RANGE;
     risultato.valorePulito = config.valoreDefault;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s:  %.2f [%. 2f-%.2f]", 
-             config.nomeSensore,
-             ERR_MEASURE_OUT_OF_RANGE,
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s: %.2f [%.2f-%.2f]", 
+             config.nomeSensore, ERR_MEASURE_OUT_OF_RANGE,
              getErroreDescrizione(ERR_MEASURE_OUT_OF_RANGE),
-             valoreGrezzo, config.rangeMin, config. rangeMax);
+             valoreGrezzo, config.rangeMin, config.rangeMax);
     return risultato;
   }
   
-  // 6) TIMESTAMP MANCANTE
   if (config.richiedeTimestamp && (timestamp == 0 || timestamp == ULONG_MAX)) {
     risultato.valido = false;
     risultato.codiceErrore = ERR_TIMESTAMP_INVALID;
     risultato.valorePulito = valoreGrezzo;
-    snprintf(risultato.messaggioErrore, 80, 
-             "[%s][%d] %s", 
-             config.nomeSensore,
-             ERR_TIMESTAMP_INVALID,
+    snprintf(risultato.messaggioErrore, 80, "[%s][%d] %s", 
+             config.nomeSensore, ERR_TIMESTAMP_INVALID,
              getErroreDescrizione(ERR_TIMESTAMP_INVALID));
     return risultato;
   }
   
-  // ✅ TUTTO OK
   risultato.valido = true;
   risultato.codiceErrore = STATUS_OK;
   risultato.valorePulito = valoreGrezzo;
-  snprintf(risultato.messaggioErrore, 80, 
-           "[%s][%d] Valore valido: %.2f", 
+  snprintf(risultato.messaggioErrore, 80, "[%s][%d] Valore valido:  %.2f", 
            config.nomeSensore, STATUS_OK, valoreGrezzo);
   
   return risultato;
 }
 
-void gestisciRisultatoValidazione(RisultatoValidazione risultato) {
+inline void gestisciRisultatoValidazione(RisultatoValidazione risultato) {
   if (risultato.codiceErrore != STATUS_OK) {
     Serial.print("❌ ");
     Serial.print(getErroreCategoria(risultato.codiceErrore));
@@ -408,11 +372,10 @@ void gestisciRisultatoValidazione(RisultatoValidazione risultato) {
   } else {
     Serial.print("✓ ");
   }
-  
   Serial.println(risultato.messaggioErrore);
 }
 
-int verificaSoglie(float valore, float sogliaMin, float sogliaMax, const char* nomeSensore) {
+inline int verificaSoglie(float valore, float sogliaMin, float sogliaMax, const char* nomeSensore) {
   if (valore > sogliaMax) {
     Serial.print("[ALERT][");
     Serial.print(ALERT_THRESHOLD_HIGH);

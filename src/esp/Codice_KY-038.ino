@@ -1,4 +1,4 @@
-#include "arduinoFFT.h"
+/*#include "arduinoFFT.h"
 
 #define SENSOR_PIN 4          
 #define SAMPLES 512           
@@ -61,4 +61,4 @@ void analizzaStatoApi(int hz) {
   }else{
     Serial.println(" -> RUMORE: Fuori range api");
   }
-}
+}*/
