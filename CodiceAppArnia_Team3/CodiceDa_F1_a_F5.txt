@@ -1,0 +1,254 @@
+F1 — Accesso area utente
+File completo: src/pages/user/Login.jsx
+
+import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../App";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+export default function Login() {
+  const nav = useNavigate();
+  const { setUserAuthed } = useContext(AppContext);
+  const [key, setKey] = useState("");
+
+  return (
+    <div className="min-h-[520px] flex items-center justify-center">
+      <Card className="w-full max-w-[420px] border-white/10 bg-white/5 text-white">
+        <CardContent className="p-6 space-y-5">
+          <div className="text-center space-y-1">
+            <div className="text-3xl">🐝</div>
+            <h1 className="text-lg font-semibold">Accesso</h1>
+            <p className="text-xs text-white/60">Inserisci la key dell’arnia</p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs text-white/70">Key Arnia</div>
+            <input
+              className="w-full h-11 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white focus:border-white/20 outline-none"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              placeholder="Es. A1"
+            />
+          </div>
+
+          <Button
+            className="w-full bg-amber-400 text-black hover:bg-amber-300"
+            onClick={() => {
+              setUserAuthed(true);     // ✅ F1
+              nav("/user/home");
+            }}
+          >
+            🔓 Accedi
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+            onClick={() => nav("/admin/access")}
+          >
+            🛠️ Accesso Admin
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+F2 — Caricamento elenco arnie
+Snippet: src/App.jsx (stato + provider)
+
+const [selectedHiveId, setSelectedHiveId] = useState("A1");
+
+const [hives, setHives] = useState([
+  { id: "A1", name: "Arnia Gialla", location: "Perugia" },
+  { id: "A2", name: "Arnia Blu", location: "Gubbio" },
+]);
+
+const selectedHive = useMemo(
+  () => hives.find((h) => h.id === selectedHiveId) ?? hives[0],
+  [hives, selectedHiveId]
+);
+F3 — Caricamento homepage utente
+File completo: src/pages/user/Home.jsx
+
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../App";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+
+export default function Home() {
+  const nav = useNavigate();
+  const {
+    hives,
+    selectedHiveId,
+    setSelectedHiveId,
+    showValues,
+    setShowValues,
+    sensorValues,
+  } = useContext(AppContext);
+
+  const StatTile = ({ icon, label, value, unit, to }) => (
+    <Card
+      onClick={() => nav(to)}
+      className="cursor-pointer border-white/10 bg-white/5 text-white hover:bg-white/10 transition"
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-2xl">{icon}</div>
+          <div className="text-xs text-white/50">Apri →</div>
+        </div>
+
+        <div className="mt-3 text-xs text-white/70">{label}</div>
+
+        <div className="mt-1 text-xl font-semibold">
+          {showValues ? (
+            <>
+              {value}
+              <span className="text-white/60 text-sm"> {unit}</span>
+            </>
+          ) : (
+            <span className="text-white/50">—</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="text-sm font-semibold">Arnia</div>
+
+        <select
+          className="h-10 w-full max-w-[320px] rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white focus:border-white/20 outline-none"
+          value={selectedHiveId}
+          onChange={(e) => setSelectedHiveId(e.target.value)}
+        >
+          {hives.map((h) => (
+            <option key={h.id} value={h.id} className="text-black">
+              {h.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <Card className="border-white/10 bg-white/5 text-white">
+        <CardContent className="p-4 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-semibold">Mostra valori</div>
+            <div className="text-xs text-white/60">Nasconde o mostra i valori numerici</div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60">{showValues ? "ON" : "OFF"}</span>
+            <Switch checked={showValues} onCheckedChange={setShowValues} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatTile icon="💧" label="Umidità" value={sensorValues.hum} unit="%" to="/user/hum" />
+        <StatTile icon="🌡️" label="Temperatura" value={sensorValues.temp} unit="°C" to="/user/temp" />
+        <StatTile icon="⚖️" label="Peso" value={sensorValues.weight} unit="kg" to="/user/weight" />
+      </div>
+
+      <Button
+        variant="outline"
+        className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+        onClick={() => nav("/user/notif")}
+      >
+        🛎️ Centro notifiche
+      </Button>
+    </div>
+  );
+}
+F4 — Caricamento pagina umidità
+File completo: src/pages/user/Humidity.jsx
+
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../App";
+import Chart30Days from "./_Chart30Days";
+
+export default function Humidity() {
+  const nav = useNavigate();
+  const { sensorValues, thresholds } = useContext(AppContext);
+
+  const value = sensorValues.hum;
+  const th = thresholds.hum;
+  const data = Array.from({ length: 30 }, () => 20 + Math.floor(Math.random() * 80));
+
+  return (
+    <div className="space-y-4 text-white">
+      <div className="text-center">
+        <div className="text-6xl">💧</div>
+
+        <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <div className="text-sm font-semibold">Ora e Data</div>
+          <div className="text-sm">
+            Umidità: <b>{value}%</b>
+          </div>
+          <div className="text-[11px] text-white/60">
+            Soglie: {th.min}% - {th.max}%
+          </div>
+        </div>
+      </div>
+
+      <Chart30Days data={data} />
+
+      <button
+        onClick={() => nav("/user/home")}
+        className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 hover:bg-white/10"
+      >
+        Indietro
+      </button>
+    </div>
+  );
+}
+F5 — Caricamento pagina temperatura
+File completo: src/pages/user/Temperature.jsx
+
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../App";
+import Chart30Days from "./_Chart30Days";
+
+export default function Temperature() {
+  const nav = useNavigate();
+  const { sensorValues, thresholds } = useContext(AppContext);
+
+  const value = sensorValues.temp;
+  const th = thresholds.temp;
+  const data = Array.from({ length: 30 }, () => 20 + Math.floor(Math.random() * 80));
+
+  return (
+    <div className="space-y-4 text-white">
+      <div className="text-center">
+        <div className="text-6xl">🌡️</div>
+
+        <div className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <div className="text-sm font-semibold">Ora e Data</div>
+          <div className="text-sm">
+            Temperatura: <b>{value}°C</b>
+          </div>
+          <div className="text-[11px] text-white/60">
+            Soglie: {th.min}°C - {th.max}°C
+          </div>
+        </div>
+      </div>
+
+      <Chart30Days data={data} />
+
+      <button
+        onClick={() => nav("/user/home")}
+        className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 hover:bg-white/10"
+      >
+        Indietro
+      </button>
+    </div>
+  );
+}
