@@ -1,46 +1,252 @@
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { createContext, useMemo, useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-function App() {
+import AppShell from "./components/layout/AppShell";
+import SideMenuUser from "./components/menus/SideMenuUser";
+import SideMenuAdmin from "./components/menus/SideMenuAdmin";
+
+import Login from "./pages/user/Login";
+import Home from "./pages/user/Home";
+import Temperature from "./pages/user/Temperature";
+import Humidity from "./pages/user/Humidity";
+import Weight from "./pages/user/Weight";
+import Notifications from "./pages/user/Notifications";
+
+import AdminAccess from "./pages/admin/Access";
+import AdminHome from "./pages/admin/Home";
+import AdminAddHive from "./pages/admin/AddHive";
+import AdminHive from "./pages/admin/Hive";
+import AdminThreshold from "./pages/admin/Threshold";
+
+export const AppContext = createContext(null);
+
+function RequireUser({ userAuthed, children }) {
+  if (!userAuthed) return <Navigate to="/user/login" replace />;
+  return children;
+}
+
+function RequireAdmin({ adminAuthed, children }) {
+  if (!adminAuthed) return <Navigate to="/admin/access" replace />;
+  return children;
+}
+
+function AppLayout({ children }) {
+  const { pathname } = useLocation();
+  const isAdminRoute = pathname.startsWith("/admin");
+
   return (
-    <div className="mx-auto max-w-7xl p-8 text-center">
-      <div className="flex justify-center">
-        <a
-          href="https://vite.dev"
-          target="_blank"
-          className="p-6 transition hover:drop-shadow-[0_0_2em_#646cffaa]"
+    <AppContext.Consumer>
+      {(ctx) => (
+        <AppShell
+          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ?? "Beehives"}
+          subtitle={isAdminRoute ? "Gestione arnie e soglie" : ctx.selectedHive?.location ?? ""}
+          onMenu={() => ctx.setMenuOpen(true)}
+          onProfile={() => {}}
         >
-          <img src={viteLogo} alt="Vite logo" className="h-24" />
-        </a>
+          {isAdminRoute ? (
+            <SideMenuAdmin open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
+          ) : (
+            <SideMenuUser open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
+          )}
 
-        <a
-          href="https://react.dev"
-          target="_blank"
-          className="p-6 animate-spin-slow transition hover:drop-shadow-[0_0_2em_#61dafbaa]"
-        >
-          <img src={reactLogo} alt="React logo" className="h-24" />
-        </a>
-      </div>
-
-      <h1 className="my-6 text-4xl font-bold">Vite + React</h1>
-
-      <div className="p-8">
-        <button className="rounded-lg border border-gray-300 px-4 py-2 font-medium transition hover:border-indigo-500 hover:text-indigo-500">
-          Ready to go 🚀
-        </button>
-
-        <p className="mt-4 text-sm">
-          Edit{" "}
-          <code className="rounded bg-gray-100 px-1 py-0.5">src/App.jsx</code>{" "}
-          and save to test HMR
-        </p>
-      </div>
-
-      <p className="text-gray-400">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
+          {children}
+        </AppShell>
+      )}
+    </AppContext.Consumer>
   );
 }
 
-export default App;
+export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // ✅ login utente / admin
+  const [userAuthed, setUserAuthed] = useState(false);
+  const [adminAuthed, setAdminAuthed] = useState(false);
+
+  // mostra/nasconde valori
+  const [showValues, setShowValues] = useState(true);
+
+  const sensorValues = useMemo(() => ({ temp: 34.2, hum: 58, weight: 12.7 }), []);
+
+  const [selectedHiveId, setSelectedHiveId] = useState("A1");
+  const [hives, setHives] = useState([
+    { id: "A1", name: "Arnia Gialla", location: "Perugia" },
+    { id: "A2", name: "Arnia Blu", location: "Gubbio" },
+  ]);
+
+  const selectedHive = useMemo(
+    () => hives.find((h) => h.id === selectedHiveId) ?? hives[0],
+    [hives, selectedHiveId]
+  );
+
+  const [thresholds, setThresholds] = useState({
+    temp: { min: 20, max: 40 },
+    hum: { min: 40, max: 80 },
+    weight: { min: 5, max: 30 },
+  });
+
+  const notifications = useMemo(
+    () => [
+      { id: 1, date: "2026-01-21", text: "Tutto regolare." },
+      { id: 2, date: "2026-01-20", text: "Umidità vicina alla soglia minima." },
+      { id: 3, date: "2026-01-10", text: "Peso in aumento negli ultimi giorni." },
+    ],
+    []
+  );
+
+  const addHive = ({ id, location }) => {
+    const newHive = { id, name: `Arnia ${id}`, location };
+    setHives((prev) => [newHive, ...prev]);
+    setSelectedHiveId(id);
+  };
+
+  const ctxValue = useMemo(
+    () => ({
+      menuOpen,
+      setMenuOpen,
+
+      userAuthed,
+      setUserAuthed,
+
+      adminAuthed,
+      setAdminAuthed,
+
+      showValues,
+      setShowValues,
+
+      sensorValues,
+      notifications,
+
+      hives,
+      selectedHiveId,
+      setSelectedHiveId,
+      selectedHive,
+
+      thresholds,
+      setThresholds,
+      addHive,
+    }),
+    [
+      menuOpen,
+      userAuthed,
+      adminAuthed,
+      showValues,
+      sensorValues,
+      notifications,
+      hives,
+      selectedHiveId,
+      selectedHive,
+      thresholds,
+    ]
+  );
+
+  return (
+    <AppContext.Provider value={ctxValue}>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Navigate to="/user/login" replace />} />
+
+          {/* LOGIN sempre accessibile */}
+          <Route path="/user/login" element={<Login />} />
+
+          {/* USER protetto */}
+          <Route
+            path="/user/home"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Home />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/user/temp"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Temperature />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/user/hum"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Humidity />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/user/weight"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Weight />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/user/notif"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Notifications />
+              </RequireUser>
+            }
+          />
+
+          {/* ADMIN access sempre accessibile */}
+          <Route path="/admin/access" element={<AdminAccess />} />
+
+          {/* ADMIN protetto */}
+          <Route
+            path="/admin/home"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminHome />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/addHive"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminAddHive />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/hive"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminHive />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/th-temp"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminThreshold tipo="temp" titolo="Soglie Temperatura" unita="°C" />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/th-hum"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminThreshold tipo="hum" titolo="Soglie Umidità" unita="%" />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/th-weight"
+            element={
+              <RequireAdmin adminAuthed={adminAuthed}>
+                <AdminThreshold tipo="weight" titolo="Soglie Peso" unita="KG" />
+              </RequireAdmin>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/user/login" replace />} />
+        </Routes>
+      </AppLayout>
+    </AppContext.Provider>
+  );
+}
