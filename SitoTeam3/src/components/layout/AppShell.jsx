@@ -13,7 +13,7 @@ function HoneyDrip() {
       <defs>
         <linearGradient id="honeyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" style={{ stopColor: '#FFD54F', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#FFC107', stopOpacity: 0.95 }} />
+          <stop offset="100%" style={{ stopColor:  '#FFC107', stopOpacity: 0.95 }} />
         </linearGradient>
       </defs>
       <path d="M0,0 L0,30 Q50,35 100,30 T200,30 Q250,32 300,30 T400,30 Q450,35 500,30 T600,30 Q650,32 700,30 T800,30 Q850,35 900,30 T1000,30 Q1050,32 1100,30 T1200,30 L1200,0 Z" fill="url(#honeyGradient)" />
@@ -27,9 +27,11 @@ function HoneyDrip() {
   );
 }
 
-// Rimosso 'title' dalle props perché non serve più
 export default function AppShell({ children, onMenu }) {
-  const { userAuthed } = useContext(AppContext);
+  const { userAuthed, adminAuthed } = useContext(AppContext);
+  
+  // ✅ Mostra il menu se ALMENO UNO dei due è autenticato
+  const showMenu = userAuthed || adminAuthed;
 
   return (
     <div className="min-h-screen w-full bg-bee">
@@ -42,16 +44,15 @@ export default function AppShell({ children, onMenu }) {
           <div className="mx-auto max-w-6xl px-4 py-4 relative z-20">
             <div className="flex items-center">
               
-              {/* Menu a sinistra (unico elemento rimasto) */}
-              <button
-                className="h-10 w-10 flex items-center justify-center rounded-lg bg-white/70 hover:bg-white border border-amber-300 text-xl disabled:opacity-0 disabled:pointer-events-none transition-all"
-                disabled={!userAuthed}
-                onClick={userAuthed ? onMenu : undefined}
-              >
-                {userAuthed ? "☰" : ""}
-              </button>
-
-              {/* Titolo rimosso completamente */}
+              {/* Menu hamburger - VISIBILE se user O admin autenticato */}
+              {showMenu && (
+                <button
+                  className="h-10 w-10 flex items-center justify-center rounded-lg bg-white/70 hover:bg-white border border-amber-300 text-xl transition-all"
+                  onClick={onMenu}
+                >
+                  ☰
+                </button>
+              )}
               
             </div>
           </div>

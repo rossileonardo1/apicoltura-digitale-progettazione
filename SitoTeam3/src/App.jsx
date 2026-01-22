@@ -1,4 +1,4 @@
-import { createContext, useMemo, useState } from "react";
+import { createContext, useMemo, useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import AppShell from "./components/layout/AppShell";
@@ -38,12 +38,12 @@ function AppLayout({ children }) {
     <AppContext.Consumer>
       {(ctx) => (
         <AppShell
-          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ?? "Beehives"}
+          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ??  "Beehives"}
           subtitle={isAdminRoute ? "Gestione arnie e soglie" : ctx.selectedHive?.location ?? ""}
           onMenu={() => ctx.setMenuOpen(true)}
           onProfile={() => {}}
         >
-          {isAdminRoute ? (
+          {isAdminRoute ?  (
             <SideMenuAdmin open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
           ) : (
             <SideMenuUser open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
@@ -59,9 +59,25 @@ function AppLayout({ children }) {
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ✅ login utente / admin
-  const [userAuthed, setUserAuthed] = useState(false);
-  const [adminAuthed, setAdminAuthed] = useState(false);
+  // ✅ STATO PERSISTENTE con localStorage
+  const [userAuthed, setUserAuthedState] = useState(() => {
+    return localStorage.getItem("userAuthed") === "true";
+  });
+  
+  const [adminAuthed, setAdminAuthedState] = useState(() => {
+    return localStorage.getItem("adminAuthed") === "true";
+  });
+
+  // ✅ Funzioni wrapper che salvano in localStorage
+  const setUserAuthed = (value) => {
+    setUserAuthedState(value);
+    localStorage.setItem("userAuthed", value.toString());
+  };
+
+  const setAdminAuthed = (value) => {
+    setAdminAuthedState(value);
+    localStorage.setItem("adminAuthed", value.toString());
+  };
 
   // mostra/nasconde valori
   const [showValues, setShowValues] = useState(true);
@@ -75,7 +91,7 @@ export default function App() {
   ]);
 
   const selectedHive = useMemo(
-    () => hives.find((h) => h.id === selectedHiveId) ?? hives[0],
+    () => hives.find((h) => h.id === selectedHiveId) ??  hives[0],
     [hives, selectedHiveId]
   );
 
