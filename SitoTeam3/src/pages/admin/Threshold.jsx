@@ -4,20 +4,29 @@ import { AppContext } from "../../App";
 
 export default function AdminThreshold({ tipo, titolo, unita }) {
   const nav = useNavigate();
-  const { thresholds, setThresholds } = useContext(AppContext);
+  const { thresholds, saveThresholds } = useContext(AppContext);
 
   const initial = thresholds[tipo];
   const [min, setMin] = useState(initial.min);
   const [max, setMax] = useState(initial.max);
+  const [saving, setSaving] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     const nMin = Number(min);
     const nMax = Number(max);
     if (Number.isNaN(nMin) || Number.isNaN(nMax)) return alert("Inserisci numeri validi");
     if (nMin >= nMax) return alert("La soglia minima deve essere < soglia massima");
 
-    setThresholds((prev) => ({ ...prev, [tipo]: { min: nMin, max: nMax } }));
-    nav("/admin/hive");
+    try {
+      setSaving(true);
+      await saveThresholds(tipo, { min: nMin, max: nMax });
+      alert("✅ Soglie salvate correttamente!");
+      nav("/admin/hive");
+    } catch (e) {
+      alert(`❌ Errore:  ${e.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -34,6 +43,7 @@ export default function AdminThreshold({ tipo, titolo, unita }) {
             type="number"
             value={min} 
             onChange={(e) => setMin(e.target.value)} 
+            disabled={saving}
           />
         </div>
 
@@ -46,14 +56,23 @@ export default function AdminThreshold({ tipo, titolo, unita }) {
             type="number"
             value={max} 
             onChange={(e) => setMax(e.target.value)} 
+            disabled={saving}
           />
         </div>
 
-        <button onClick={submit} className="btn-honey w-full h-12 rounded-xl font-bold">
-          ✓ Conferma
+        <button 
+          onClick={submit} 
+          className="btn-honey w-full h-12 rounded-xl font-bold"
+          disabled={saving}
+        >
+          {saving ? "⏳ Salvataggio..." : "✓ Conferma"}
         </button>
 
-        <button onClick={() => nav("/admin/hive")} className="btn-white w-full h-11 rounded-xl">
+        <button 
+          onClick={() => nav("/admin/hive")} 
+          className="btn-white w-full h-11 rounded-xl"
+          disabled={saving}
+        >
           ← Indietro
         </button>
       </div>
