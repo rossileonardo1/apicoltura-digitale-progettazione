@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import { useLocation } from "react-router-dom";
 import { AppContext } from "../../App";
 
 // SVG Effetto Miele che Gocciola
@@ -29,9 +30,13 @@ function HoneyDrip() {
 
 export default function AppShell({ children, onMenu }) {
   const { userAuthed, adminAuthed } = useContext(AppContext);
+  const { pathname } = useLocation();
   
-  // ✅ Mostra il menu se ALMENO UNO dei due è autenticato
-  const showMenu = userAuthed || adminAuthed;
+  // ✅ Pagine dove il menu NON deve apparire (pagine di login)
+  const isLoginPage = pathname === "/user/login" || pathname === "/admin/access";
+  
+  // ✅ Mostra il menu se:  NON sei in una pagina di login E almeno uno dei due è autenticato
+  const showMenu = !isLoginPage && (userAuthed || adminAuthed);
 
   return (
     <div className="min-h-screen w-full bg-bee">
@@ -44,7 +49,7 @@ export default function AppShell({ children, onMenu }) {
           <div className="mx-auto max-w-6xl px-4 py-4 relative z-20">
             <div className="flex items-center">
               
-              {/* Menu hamburger - VISIBILE se user O admin autenticato */}
+              {/* Menu hamburger */}
               {showMenu && (
                 <button
                   className="h-10 w-10 flex items-center justify-center rounded-lg bg-white/70 hover:bg-white border border-amber-300 text-xl transition-all"
