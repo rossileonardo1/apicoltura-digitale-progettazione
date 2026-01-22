@@ -1,7 +1,7 @@
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../App";
-import Chart30Days from "./_Chart30Days";
+import SensorChart from "./SensorCharts";
 
 export default function Weight() {
   const nav = useNavigate();
@@ -9,7 +9,14 @@ export default function Weight() {
 
   const value = sensorValues.weight;
   const th = thresholds.weight;
-  const data = Array.from({ length: 30 }, () => 20 + Math.floor(Math.random() * 80));
+  
+  // Genera dati realistici per 30 giorni
+  const chartData = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => ({
+      day: `${i + 1}`,
+      weight: 10 + Math.random() * 15 + Math.sin(i / 5) * 3
+    }));
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -17,9 +24,9 @@ export default function Weight() {
         <div className="text-8xl mb-4">⚖️</div>
 
         <div className="card-white rounded-2xl p-4">
-          <div className="text-sm font-bold text-gray-900 mb-2">Ora e Data</div>
-          <div className="text-2xl font-bold text-gray-900 mb-1">
-            Peso: {value} KG
+          <div className="text-sm font-bold text-gray-900 mb-2">Rilevazione Attuale</div>
+          <div className="text-4xl font-bold text-gray-900 mb-1">
+            {value} KG
           </div>
           <div className="text-xs text-gray-600">
             Soglie: {th.min}KG - {th.max}KG
@@ -27,7 +34,13 @@ export default function Weight() {
         </div>
       </div>
 
-      <Chart30Days data={data} />
+      <SensorChart 
+        data={chartData}
+        dataKey="weight"
+        color="#10B981"
+        unit="kg"
+        label="Andamento Peso"
+      />
 
       <button onClick={() => nav("/user/home")} className="btn-white w-full h-12 rounded-xl">
         ← Indietro
