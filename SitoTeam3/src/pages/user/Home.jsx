@@ -2,10 +2,6 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../App";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-
 export default function Home() {
   const nav = useNavigate();
   const {
@@ -18,70 +14,76 @@ export default function Home() {
   } = useContext(AppContext);
 
   const StatTile = ({ icon, label, value, unit, to }) => (
-    <Card
+    <div
       onClick={() => nav(to)}
-      className="cursor-pointer border-white/10 bg-white/5 text-white hover:bg-white/10 transition"
+      className="card-white rounded-2xl p-4 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="text-2xl">{icon}</div>
-          <div className="text-xs text-white/50">Apri →</div>
-        </div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-4xl">{icon}</div>
+        <div className="text-xs text-gray-600 font-medium">Apri →</div>
+      </div>
 
-        <div className="mt-3 text-xs text-white/70">{label}</div>
+      <div className="text-xs text-gray-600 font-semibold mb-1">{label}</div>
 
-        <div className="mt-1 text-xl font-semibold">
-          {showValues ? (
-            <>
-              {value}
-              <span className="text-white/60 text-sm"> {unit}</span>
-            </>
-          ) : (
-            <span className="text-white/50">—</span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      <div className="text-2xl font-bold text-gray-900">
+        {showValues ? (
+          <>
+            {value}
+            <span className="text-gray-600 text-lg"> {unit}</span>
+          </>
+        ) : (
+          <span className="text-gray-400">—</span>
+        )}
+      </div>
+    </div>
   );
 
   return (
     <div className="space-y-5">
       {/* Selezione arnia */}
-      <div className="flex items-center gap-3">
-        <div className="text-sm font-semibold">Arnia</div>
+      <div className="card-white rounded-xl p-4">
+        <div className="text-sm font-bold text-gray-900 mb-3">Seleziona Arnia</div>
 
         <select
-          className="h-10 w-full max-w-[320px] rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white
-                     focus:border-white/20 outline-none"
+          className="select-honey h-10 w-full rounded-xl px-3 text-sm font-medium text-gray-900"
           value={selectedHiveId}
           onChange={(e) => setSelectedHiveId(e.target.value)}
         >
           {hives.map((h) => (
-            <option key={h.id} value={h.id} className="text-black">
-              {h.name}
+            <option key={h.id} value={h.id}>
+              {h.name} — {h.location}
             </option>
           ))}
         </select>
       </div>
 
       {/* Toggle valori */}
-      <Card className="border-white/10 bg-white/5 text-white">
-        <CardContent className="p-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold">Mostra valori</div>
-            <div className="text-xs text-white/60">
-              Nasconde o mostra i valori numerici
-            </div>
+      <div className="card-white rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-bold text-gray-900">Mostra valori</div>
+          <div className="text-xs text-gray-600">
+            Nasconde o mostra i valori numerici
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-white/60">
-              {showValues ? "ON" : "OFF"}
-            </span>
-            <Switch checked={showValues} onCheckedChange={setShowValues} />
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-600 font-semibold">
+            {showValues ? "ON" : "OFF"}
+          </span>
+          <button
+            onClick={() => setShowValues(!showValues)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              showValues ? 'bg-amber-400' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                showValues ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
 
       {/* Statistiche */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -91,13 +93,12 @@ export default function Home() {
       </div>
 
       {/* Notifiche */}
-      <Button
-        variant="outline"
-        className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10"
+      <button
+        className="btn-honey w-full h-12 rounded-xl"
         onClick={() => nav("/user/notif")}
       >
-        🛎️ Centro notifiche
-      </Button>
+        🔔 Centro notifiche
+      </button>
     </div>
   );
 }

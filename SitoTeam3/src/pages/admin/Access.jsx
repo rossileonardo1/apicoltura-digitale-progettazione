@@ -18,22 +18,23 @@ export default function AdminAccess() {
 
   return (
     <div className="min-h-[520px] flex flex-col items-center justify-center gap-4">
-      <h1 className="text-xl font-semibold">Accesso Admin</h1>
+      <div className="text-6xl mb-2">🔐</div>
+      <h1 className="text-2xl font-bold text-gray-900">Accesso Admin</h1>
 
       <input
-        className="w-full max-w-[280px] border bg-white h-10 px-3 text-sm rounded-xl"
+        className="input-honey w-full max-w-[280px] h-11 px-3 text-sm rounded-xl text-gray-900"
         placeholder="Password speciale"
         type="password"
         value={pwd}
         onChange={(e) => setPwd(e.target.value)}
       />
 
-      <button onClick={tryAccess} className="px-10 py-3 rounded-2xl border bg-yellow-300 hover:bg-yellow-400 font-semibold">
+      <button onClick={tryAccess} className="btn-honey px-10 py-3 rounded-xl font-bold">
         Entra
       </button>
 
-      <button onClick={() => nav("/user/login")} className="text-xs underline">
-        Torna al Login
+      <button onClick={() => nav("/user/login")} className="text-xs text-gray-600 underline hover:text-gray-900">
+        ← Torna al Login
       </button>
     </div>
   );

@@ -14,14 +14,14 @@ export default function Temperature() {
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <div className="text-6xl">🌡️</div>
+        <div className="text-8xl mb-4">🌡️</div>
 
-        <div className="mt-2 rounded-2xl border bg-white/55 p-3">
-          <div className="text-sm font-semibold">Ora e Data</div>
-          <div className="text-sm">
-            Temperatura: <b>{value}°C</b>
+        <div className="card-white rounded-2xl p-4">
+          <div className="text-sm font-bold text-gray-900 mb-2">Ora e Data</div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            Temperatura: {value}°C
           </div>
-          <div className="text-[11px] text-black/60">
+          <div className="text-xs text-gray-600">
             Soglie: {th.min}°C - {th.max}°C
           </div>
         </div>
@@ -29,8 +29,8 @@ export default function Temperature() {
 
       <Chart30Days data={data} />
 
-      <button onClick={() => nav("/user/home")} className="w-full rounded-2xl border bg-white/70 py-3">
-        Indietro
+      <button onClick={() => nav("/user/home")} className="btn-white w-full h-12 rounded-xl">
+        ← Indietro
       </button>
     </div>
   );
