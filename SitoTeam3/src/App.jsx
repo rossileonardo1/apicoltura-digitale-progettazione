@@ -11,6 +11,7 @@ import Temperature from "./pages/user/Temperature";
 import Humidity from "./pages/user/Humidity";
 import Weight from "./pages/user/Weight";
 import Notifications from "./pages/user/Notifications";
+import Map from "./pages/user/Map";
 
 import AdminAccess from "./pages/admin/Access";
 import AdminHome from "./pages/admin/Home";
@@ -38,7 +39,7 @@ function AppLayout({ children }) {
     <AppContext.Consumer>
       {(ctx) => (
         <AppShell
-          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ?? "Beehives"}
+          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ??  "Beehives"}
           subtitle={isAdminRoute ? "Gestione arnie e soglie" : ctx.selectedHive?.location ?? ""}
           onMenu={() => ctx.setMenuOpen(true)}
           onProfile={() => {}}
@@ -59,9 +60,25 @@ function AppLayout({ children }) {
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ✅ login utente / admin
-  const [userAuthed, setUserAuthed] = useState(false);
-  const [adminAuthed, setAdminAuthed] = useState(false);
+  // ✅ STATO PERSISTENTE con localStorage
+  const [userAuthed, setUserAuthedState] = useState(() => {
+    return localStorage.getItem("userAuthed") === "true";
+  });
+  
+  const [adminAuthed, setAdminAuthedState] = useState(() => {
+    return localStorage.getItem("adminAuthed") === "true";
+  });
+
+  // ✅ Funzioni wrapper che salvano in localStorage
+  const setUserAuthed = (value) => {
+    setUserAuthedState(value);
+    localStorage.setItem("userAuthed", value. toString());
+  };
+
+  const setAdminAuthed = (value) => {
+    setAdminAuthedState(value);
+    localStorage.setItem("adminAuthed", value.toString());
+  };
 
   // mostra/nasconde valori
   const [showValues, setShowValues] = useState(true);
@@ -69,19 +86,33 @@ export default function App() {
   const sensorValues = useMemo(() => ({ temp: 34.2, hum: 58, weight: 12.7 }), []);
 
   const [selectedHiveId, setSelectedHiveId] = useState("A1");
+  
+  // ✅ Arnie con coordinate
   const [hives, setHives] = useState([
-    { id: "A1", name: "Arnia Gialla", location: "Perugia" },
-    { id: "A2", name: "Arnia Blu", location: "Gubbio" },
+    { 
+      id: "A1", 
+      name: "Arnia Gialla", 
+      location: "Perugia",
+      lat: 43.1107,
+      lng: 12.3908
+    },
+    { 
+      id: "A2", 
+      name: "Arnia Blu", 
+      location:  "Gubbio",
+      lat: 43.3528,
+      lng: 12.5784
+    },
   ]);
 
   const selectedHive = useMemo(
-    () => hives.find((h) => h.id === selectedHiveId) ?? hives[0],
+    () => hives.find((h) => h.id === selectedHiveId) ??  hives[0],
     [hives, selectedHiveId]
   );
 
   const [thresholds, setThresholds] = useState({
     temp: { min: 20, max: 40 },
-    hum: { min: 40, max: 80 },
+    hum:  { min: 40, max: 80 },
     weight: { min: 5, max: 30 },
   });
 
@@ -94,8 +125,15 @@ export default function App() {
     []
   );
 
-  const addHive = ({ id, location }) => {
-    const newHive = { id, name: `Arnia ${id}`, location };
+  // ✅ Aggiornato per supportare coordinate
+  const addHive = ({ id, location, lat, lng }) => {
+    const newHive = { 
+      id, 
+      name:  `Arnia ${id}`, 
+      location,
+      lat:  lat || 43.1107,  // Default: Perugia
+      lng: lng || 12.3908
+    };
     setHives((prev) => [newHive, ...prev]);
     setSelectedHiveId(id);
   };
@@ -155,6 +193,14 @@ export default function App() {
             element={
               <RequireUser userAuthed={userAuthed}>
                 <Home />
+              </RequireUser>
+            }
+          />
+          <Route
+            path="/user/map"
+            element={
+              <RequireUser userAuthed={userAuthed}>
+                <Map />
               </RequireUser>
             }
           />
@@ -247,6 +293,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/user/login" replace />} />
         </Routes>
       </AppLayout>
-    </AppContext.Provider>
+    </AppContext. Provider>
   );
 }

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 /* =========================================================
    HONEY BEE THEME - CALDO, ACCOGLIENTE, DOLCE
@@ -24,7 +25,7 @@
   inset: 0;
   pointer-events: none;
   opacity: 0.08;
-  background-image:
+  background-image: 
     linear-gradient(30deg, rgba(139, 69, 19, 0.3) 12%, transparent 12.5%, transparent 87%, rgba(139, 69, 19, 0.3) 87.5%, rgba(139, 69, 19, 0.3)),
     linear-gradient(150deg, rgba(139, 69, 19, 0.3) 12%, transparent 12.5%, transparent 87%, rgba(139, 69, 19, 0.3) 87.5%, rgba(139, 69, 19, 0.3)),
     linear-gradient(90deg, rgba(139, 69, 19, 0.2) 2%, transparent 2.5%, transparent 97%, rgba(139, 69, 19, 0.2) 97.5%, rgba(139, 69, 19, 0.2));
@@ -48,7 +49,7 @@
 
 /* Stripe miele decorative */
 .honey-stripes {
-  background-image: linear-gradient(
+  background-image:  linear-gradient(
     135deg,
     rgba(255, 193, 7, 0.15) 0%,
     rgba(255, 193, 7, 0.15) 12%,
@@ -59,7 +60,7 @@
     transparent 36%,
     transparent 48%
   );
-  background-size: 240px 240px;
+  background-size:  240px 240px;
 }
 
 /* Effetto miele che gocciola */
@@ -108,7 +109,7 @@
 }
 
 /* Input fields */
-.input-honey {
+. input-honey {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(139, 69, 19, 0.2);
   color: #2c1810;
@@ -140,8 +141,8 @@
   color: #2c1810;
 }
 
-.text-honey-medium {
-  color: rgba(44, 24, 16, 0.7);
+.text-honey-light {
+  color: rgba(44, 24, 16, 0.5);
 }
 
 .text-honey-light {
