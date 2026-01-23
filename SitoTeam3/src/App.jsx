@@ -21,6 +21,9 @@ import AdminThreshold from "./pages/admin/Threshold";
 
 import { api } from "./lib/restdb";
 
+// ✅ AGGIUNGI QUESTO IMPORT
+import InstallPWA from "./components/InstallPWA";
+
 export const AppContext = createContext(null);
 
 function RequireUser({ userAuthed, children }) {
@@ -584,7 +587,7 @@ useEffect(() => {
     [menuOpen, userAuthed, adminAuthed, showValues, hives, selectedHiveId, selectedHive, apiari, selectedApiarioId, thresholds, sensorValues, notifications, loading, error]
   );
 
-  return (
+    return (
     <AppContext.Provider value={ctxValue}>
       <AppLayout>
         <Routes>
@@ -606,6 +609,9 @@ useEffect(() => {
           <Route path="*" element={<Navigate to="/user/login" replace />} />
         </Routes>
       </AppLayout>
+      
+      {/* ✅ Prompt installazione PWA */}
+      <InstallPWA />
     </AppContext.Provider>
   );
 }
