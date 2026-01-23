@@ -324,7 +324,7 @@ export default function App() {
     };
   }, [sensoriArnia, lastBySeaId, tipi]);
 
-  // ✅ LOAD INIZIALE
+ // ✅ LOAD INIZIALE
 useEffect(() => {
   let alive = true;
   
@@ -351,11 +351,21 @@ useEffect(() => {
       const adminAuthed = localStorage.getItem("adminAuthed");
       const isAdmin = adminAuthed === "true";
       
+      console.log("🔐 Controllo accesso:");
+      console.log("  - userApiarioId:", userApiarioId);
+      console.log("  - isAdmin:", isAdmin);
+      
       // ✅ Se NON è admin E ha un apiario assegnato, filtra
       if (!isAdmin && userApiarioId && userApiarioId !== "null" && userApiarioId !== "" && userApiarioId !== "undefined") {
+        console.log(`🔒 Filtraggio per apiario ${userApiarioId}`);
+        
         arnieFiltered = arnieFiltered.filter((a) => {
           return String(a.arn_api_id) === String(userApiarioId);
         });
+        
+        console.log(`📋 ${arnieFiltered.length} arnie trovate`);
+      } else if (isAdmin) {
+        console.log("👑 Admin - Tutte le arnie");
       }
       
       setArnieRaw(arnieFiltered);
@@ -375,7 +385,7 @@ useEffect(() => {
   return () => {
     alive = false;
   };
-}, []);
+}, [userApiarioIdState]);  // ✅ AGGIUNGI QUESTA DIPENDENZA
 
   // ✅ LOAD PER ARNIA SELEZIONATA
   useEffect(() => {
