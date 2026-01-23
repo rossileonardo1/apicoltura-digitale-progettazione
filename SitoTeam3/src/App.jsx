@@ -249,7 +249,7 @@ const selectedHive = useMemo(() => {
     humHistory,
     weightHistory,
   };
-}, [selectedHiveId, hives, sensoriArnia, lastBySeaId, tipi, rilevazioni]);
+}, [selectedHiveId, hives, rilevazioni, sensoriArnia, lastBySeaId, tipi]);
 
   // ✅ THRESHOLDS da DB
   const thresholds = useMemo(() => {
