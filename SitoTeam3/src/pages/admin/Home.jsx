@@ -129,25 +129,39 @@ export default function AdminHome() {
       )}
 
       {/* Pulsanti Azioni */}
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => nav("/admin/addHive")}
-          className="card-white rounded-2xl p-6 hover:shadow-lg transition-all text-center group"
-        >
-          <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">➕</div>
-          <div className="font-bold text-gray-900">Aggiungi Arnia</div>
-          <div className="text-xs text-gray-600 mt-1">Nuova arnia nell'apiario</div>
-        </button>
+<div className="grid grid-cols-2 gap-4">
+  {/* AGGIUNGI ARNIA - sempre attivo */}
+  <button
+    onClick={() => nav("/admin/addHive")}
+    className="card-white rounded-2xl p-6 hover:shadow-lg transition-all text-center group"
+  >
+    <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">➕</div>
+    <div className="font-bold text-gray-900">Aggiungi Arnia</div>
+    <div className="text-xs text-gray-600 mt-1">Nuova arnia nell'apiario</div>
+  </button>
 
-        <button
-          onClick={() => nav("/admin/hive")}
-          className="card-white rounded-2xl p-6 hover:shadow-lg transition-all text-center group"
-        >
-          <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔧</div>
-          <div className="font-bold text-gray-900">Gestisci Arnia</div>
-          <div className="text-xs text-gray-600 mt-1">Configurazione arnia selezionata</div>
-        </button>
+  {/* GESTISCI ARNIA - attivo solo se hai selezionato un'arnia */}
+  {selectedHiveId ? (
+    <button
+      onClick={() => nav("/admin/hive")}
+      className="card-white rounded-2xl p-6 hover:shadow-lg transition-all text-center group cursor-pointer"
+    >
+      <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🔧</div>
+      <div className="font-bold text-gray-900">Gestisci Arnia</div>
+      <div className="text-xs text-gray-600 mt-1">
+        Configurazione arnia {selectedHiveId}
       </div>
+    </button>
+  ) : (
+    <div className="card-white rounded-2xl p-6 text-center opacity-50 cursor-not-allowed border-2 border-dashed border-gray-300">
+      <div className="text-5xl mb-3 opacity-30">🔧</div>
+      <div className="font-bold text-gray-900">Gestisci Arnia</div>
+      <div className="text-xs text-red-600 mt-1 font-semibold">
+        ⚠️ Seleziona prima un'arnia sopra
+      </div>
+    </div>
+  )}
+</div>
 
       {/* Soglie */}
       <div className="card-white rounded-2xl p-6">

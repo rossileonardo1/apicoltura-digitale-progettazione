@@ -36,20 +36,26 @@ function RequireAdmin({ adminAuthed, children }) {
 function AppLayout({ children }) {
   const { pathname } = useLocation();
   const isAdminRoute = pathname.startsWith("/admin");
+  
+  // ✅ Nascondi menu su login e admin access
+  const isLoginPage = pathname === "/user/login" || pathname === "/admin/access";
 
   return (
     <AppContext.Consumer>
       {(ctx) => (
         <AppShell
-          title={isAdminRoute ? "AREA ADMIN" : ctx.selectedHive?.name ??  "Beehives"}
-          subtitle={isAdminRoute ? "Gestione arnie e soglie" : ctx.selectedHive?. location ?? ""}
-          onMenu={() => ctx.setMenuOpen(true)}
-          onProfile={() => {}}
-        >
-          {isAdminRoute ?  (
-            <SideMenuAdmin open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
-          ) : (
-            <SideMenuUser open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
+  onMenu={() => ctx.setMenuOpen(true)}
+  showMenuButton={!isLoginPage}
+>
+          {/* ✅ MOSTRA IL MENU SOLO SE NON SEI SULLA PAGINA DI LOGIN */}
+          {!isLoginPage && (
+            <>
+              {isAdminRoute ? (
+                <SideMenuAdmin open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
+              ) : (
+                <SideMenuUser open={ctx.menuOpen} onClose={() => ctx.setMenuOpen(false)} />
+              )}
+            </>
           )}
 
           {ctx.error ? (
@@ -60,7 +66,7 @@ function AppLayout({ children }) {
 
           {ctx.loading ? (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              Caricamento... 
+              Caricamento...
             </div>
           ) : null}
 
@@ -289,15 +295,33 @@ const hives = useMemo(() => {
         }
         setLastBySeaId(map);
 
-        const nots = await api.listNotifiche(100);
-          if (!alive) return;
+const nots = await api.listNotifiche(100);
+if (!alive) return;
 
-          // ✅ Trasforma notifiche DB in formato UI
-          const notificationsFormatted = Array.isArray(nots) ? nots. map((n, index) => ({
-            id: n._id || index,
-            date: n._created ?  new Date(n._created).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            text: n.not_messaggio || n.not_desc || n.not_titolo || 'Notifica'
-          })) : [];
+console.log("📢 NOTIFICHE DAL DATABASE:", nots); // ✅ DEBUG
+
+// ✅ FORMATO CORRETTO con rawData
+const notificationsFormatted = Array.isArray(nots) ? nots.map((n, index) => {
+  console.log("Notifica singola:", n); // ✅ DEBUG
+  
+  return {
+    id: n._id || index,
+    date: n._created 
+      ? new Date(n._created).toISOString().split('T')[0] 
+      : new Date().toISOString().split('T')[0],
+    text: n.not_desc || n.not_titolo || 'Notifica',
+    arniaId: n.not_arn_id || selectedHiveId,
+    rawData: n,  // ✅ IMPORTANTE: salva TUTTO l'oggetto originale
+  };
+}) : [];
+
+console.log("📋 NOTIFICHE FORMATTATE:", notificationsFormatted); // ✅ DEBUG
+
+setNotifications(notificationsFormatted);
+
+setNotifications(notificationsFormatted);
+
+setNotifications(notificationsFormatted);
 
 setNotifications(notificationsFormatted);
       } catch (e) {
@@ -314,27 +338,47 @@ setNotifications(notificationsFormatted);
     };
   }, [selectedHiveId]);
 
-  // ✅ AGGIUNGI ARNIA
-  const addHive = async ({ id, location }) => {
-    const arn_id = Number(id);
-    if (! Number.isFinite(arn_id)) throw new Error("ID arnia non valido");
+  // ✅ AGGIUNGI ARNIA con apiario selezionato
+const addHive = async ({ id, apiarioId }) => {
+  const arn_id = Number(id);
+  const api_id = Number(apiarioId);
 
-    const defaultApiId = apiari?.[0]?.api_id ??  0;
+  // ✅ VALIDAZIONE
+  if (!Number.isFinite(arn_id) || arn_id <= 0) {
+    throw new Error("ID arnia non valido (deve essere un numero positivo)");
+  }
 
-    const payload = {
-      arn_id,
-      arn_api_id: Number(defaultApiId),
-      arn_dataInst: new Date().toISOString().slice(0, 10),
-      arn_piena: false,
-      arn_MacAddres: "00:00:00:00:00:00",
-    };
+  if (!Number.isFinite(api_id) || api_id <= 0) {
+    throw new Error("ID apiario non valido");
+  }
 
-    await api.createArnia(payload);
+  // ✅ VERIFICA CHE L'APIARIO ESISTA
+  const apiarioEsiste = apiari.find((a) => Number(a.api_id) === api_id);
+  if (!apiarioEsiste) {
+    throw new Error(`Apiario ${api_id} non trovato`);
+  }
 
-    const arnieList = await api.listArnie();
-    setArnieRaw(Array.isArray(arnieList) ? arnieList : []);
-    setSelectedHiveId(String(arn_id));
+  // ✅ VERIFICA CHE L'ARNIA NON ESISTA GIÀ
+  const arniaEsiste = arnieRaw.find((a) => Number(a.arn_id) === arn_id);
+  if (arniaEsiste) {
+    throw new Error(`Arnia ${arn_id} esiste già!`);
+  }
+
+  const payload = {
+    arn_id: arn_id,
+    arn_api_id: api_id,  // ✅ USA L'APIARIO SELEZIONATO
+    arn_dataInst: new Date().toISOString().slice(0, 10),
+    arn_piena: false,
+    arn_MacAddres: "00:00:00:00:00:00",
   };
+
+  await api.createArnia(payload);
+
+  // Ricarica arnie
+  const arnieList = await api.listArnie();
+  setArnieRaw(Array.isArray(arnieList) ? arnieList : []);
+  setSelectedHiveId(String(arn_id));
+};
 
   // ✅ SALVA SOGLIE
   const saveThresholds = async (tipo, { min, max }) => {
