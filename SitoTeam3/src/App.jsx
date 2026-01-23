@@ -78,6 +78,11 @@ export default function App() {
   const [adminAuthed, setAdminAuthedState] = useState(false);
   const [showValues, setShowValues] = useState(true);
   
+  // ✅ AGGIUNGI: Stato per userApiarioId
+  const [userApiarioIdState, setUserApiarioIdState] = useState(
+    localStorage.getItem("userApiarioId") || null
+  );
+  
   // ✅ STATO DATABASE
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -95,10 +100,13 @@ export default function App() {
 
   // ✅ Funzioni wrapper per localStorage
   const setUserAuthed = (value) => {
-    setUserAuthedState(value);
-    localStorage.setItem("userAuthed", value.toString());
-  };
-
+  setUserAuthedState(value);
+  localStorage.setItem("userAuthed", value.toString());
+  
+  // ✅ Aggiorna anche userApiarioId
+  const apiarioId = localStorage.getItem("userApiarioId");
+  setUserApiarioIdState(apiarioId);
+};
   const setAdminAuthed = (value) => {
     setAdminAuthedState(value);
     localStorage.setItem("adminAuthed", value.toString());
@@ -108,7 +116,7 @@ export default function App() {
   const hives = useMemo(() => {
     const apiMap = new Map(apiari.map((a) => [Number(a.api_id), a]));
     
-    return arnieRaw.map((a) => {
+    const result = arnieRaw.map((a) => {
       const apiario = apiMap.get(Number(a.arn_api_id));
       const loc = apiario?.api_nome || apiario?.api_luogo || `Apiario ${a.arn_api_id}`;
       const lat = apiario?.api_lat ? parseFloat(apiario.api_lat) : 43.1107;
@@ -125,131 +133,135 @@ export default function App() {
         _raw: a,
       };
     });
+    
+    console.log("🐝 Hives generate:", result);
+    
+    return result;
   }, [arnieRaw, apiari]);
 
-const selectedHive = useMemo(() => {
-  if (!selectedHiveId) return null;
-  const hive = hives.find((h) => h.id === selectedHiveId);
-  if (!hive) return null;
+  const selectedHive = useMemo(() => {
+    if (!selectedHiveId) return null;
+    const hive = hives.find((h) => h.id === selectedHiveId);
+    if (!hive) return null;
 
-  // ✅ TROVA il tip_id per Peso dalla tabella tipirilevazione
-  const getTipId = (want) => {
-    const w = String(want).toLowerCase();
-    const alt = w === "umidità" ? ["umidita"] : [];
-    const found = tipi.find((t) => {
-      const s = String(t.tip_tipologia).toLowerCase();
-      return s === w || alt.includes(s);
+    // ✅ TROVA il tip_id per Peso dalla tabella tipirilevazione
+    const getTipId = (want) => {
+      const w = String(want).toLowerCase();
+      const alt = w === "umidità" ? ["umidita"] : [];
+      const found = tipi.find((t) => {
+        const s = String(t.tip_tipologia).toLowerCase();
+        return s === w || alt.includes(s);
+      });
+      return found?.tip_id ?? null;
+    };
+
+    const tipTemp = getTipId("temperatura");  // 12
+    const tipHum = getTipId("umidità");       // 10
+    const tipPeso = getTipId("peso");         // 11
+
+    // ✅ TROVA i sea_id dei sensori per questa arnia
+    const seaTemp = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipTemp));
+    const seaHum = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipHum));
+    const seaWeight = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipPeso));
+
+    // ✅ Temperatura
+    const tempHistory = rilevazioni
+      .filter((r) => {
+        if (seaTemp) {
+          return Number(r.ril_sea_id) === Number(seaTemp.sea_id);
+        }
+        return false;
+      })
+      .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
+      .map((r) => ({
+        timestamp: r.ril_dataOra || r._created,
+        value: parseFloat(r.ril_dato || r.ril_valore) || 0,
+      }));
+
+    // ✅ Umidità
+    const humHistory = rilevazioni
+      .filter((r) => {
+        if (seaHum) {
+          return Number(r.ril_sea_id) === Number(seaHum.sea_id);
+        }
+        return false;
+      })
+      .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
+      .map((r) => ({
+        timestamp: r.ril_dataOra || r._created,
+        value: parseFloat(r.ril_dato || r.ril_valore) || 0,
+      }));
+
+    // ✅ Peso
+    const weightHistory = rilevazioni
+      .filter((r) => {
+        if (seaWeight) {
+          return Number(r.ril_sea_id) === Number(seaWeight.sea_id);
+        }
+        return false;
+      })
+      .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
+      .map((r) => ({
+        timestamp: r.ril_dataOra || r._created,
+        value: parseFloat(r.ril_dato || r.ril_valore) || 0,
+      }));
+
+    console.log("📊 Storici caricati per arnia", selectedHiveId, {
+      seaTemp: seaTemp?.sea_id,
+      seaHum: seaHum?.sea_id,
+      seaWeight: seaWeight?.sea_id,
+      tempHistory: tempHistory.length,
+      humHistory: humHistory.length,
+      weightHistory: weightHistory.length,
     });
-    return found?.tip_id ?? null;
-  };
 
-  const tipTemp = getTipId("temperatura");  // 12
-  const tipHum = getTipId("umidità");       // 10
-  const tipPeso = getTipId("peso");         // 11
-
-  // ✅ TROVA i sea_id dei sensori per questa arnia
-  const seaTemp = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipTemp));
-  const seaHum = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipHum));
-  const seaWeight = sensoriArnia.find(s => Number(s.sea_arn_id) === Number(selectedHiveId) && Number(s.sea_tip_id) === Number(tipPeso));
-
-  // ✅ Temperatura
-  const tempHistory = rilevazioni
-    .filter((r) => {
-      if (seaTemp) {
-        return Number(r.ril_sea_id) === Number(seaTemp.sea_id);
+    // ✅ FALLBACK: Se non ci sono dati storici, usa l'ultimo valore da lastBySeaId
+    if (tempHistory.length === 0 && seaTemp) {
+      const lastTemp = lastBySeaId[String(seaTemp.sea_id)];
+      if (lastTemp && lastTemp.ril_dato) {
+        tempHistory.push({
+          timestamp: lastTemp.ril_dataOra || lastTemp._created || new Date().toISOString(),
+          value: parseFloat(lastTemp.ril_dato) || 0,
+        });
       }
-      return false;
-    })
-    .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
-    .map((r) => ({
-      timestamp: r.ril_dataOra || r._created,
-      value: parseFloat(r.ril_dato || r.ril_valore) || 0,
-    }));
+    }
 
-  // ✅ Umidità
-  const humHistory = rilevazioni
-    .filter((r) => {
-      if (seaHum) {
-        return Number(r.ril_sea_id) === Number(seaHum.sea_id);
+    if (humHistory.length === 0 && seaHum) {
+      const lastHum = lastBySeaId[String(seaHum.sea_id)];
+      if (lastHum && lastHum.ril_dato) {
+        humHistory.push({
+          timestamp: lastHum.ril_dataOra || lastHum._created || new Date().toISOString(),
+          value: parseFloat(lastHum.ril_dato) || 0,
+        });
       }
-      return false;
-    })
-    .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
-    .map((r) => ({
-      timestamp: r.ril_dataOra || r._created,
-      value: parseFloat(r.ril_dato || r.ril_valore) || 0,
-    }));
+    }
 
-  // ✅ Peso
-  const weightHistory = rilevazioni
-    .filter((r) => {
-      if (seaWeight) {
-        return Number(r.ril_sea_id) === Number(seaWeight.sea_id);
+    if (weightHistory.length === 0 && seaWeight) {
+      const lastWeight = lastBySeaId[String(seaWeight.sea_id)];
+      if (lastWeight && lastWeight.ril_dato) {
+        weightHistory.push({
+          timestamp: lastWeight.ril_dataOra || lastWeight._created || new Date().toISOString(),
+          value: parseFloat(lastWeight.ril_dato) || 0,
+        });
       }
-      return false;
-    })
-    .sort((a, b) => new Date(a.ril_dataOra || a._created) - new Date(b.ril_dataOra || b._created))
-    .map((r) => ({
-      timestamp: r.ril_dataOra || r._created,
-      value: parseFloat(r.ril_dato || r.ril_valore) || 0,
-    }));
-
-  console.log("📊 Storici caricati per arnia", selectedHiveId, {
-    seaTemp: seaTemp?.sea_id,
-    seaHum: seaHum?.sea_id,
-    seaWeight: seaWeight?.sea_id,
-    tempHistory: tempHistory.length,
-    humHistory: humHistory.length,
-    weightHistory: weightHistory.length,
-  });
-
-  // ✅ FALLBACK: Se non ci sono dati storici, usa l'ultimo valore da lastBySeaId
-  if (tempHistory.length === 0 && seaTemp) {
-    const lastTemp = lastBySeaId[String(seaTemp.sea_id)];
-    if (lastTemp && lastTemp.ril_dato) {
-      tempHistory.push({
-        timestamp: lastTemp.ril_dataOra || lastTemp._created || new Date().toISOString(),
-        value: parseFloat(lastTemp.ril_dato) || 0,
-      });
     }
-  }
 
-  if (humHistory.length === 0 && seaHum) {
-    const lastHum = lastBySeaId[String(seaHum.sea_id)];
-    if (lastHum && lastHum.ril_dato) {
-      humHistory.push({
-        timestamp: lastHum.ril_dataOra || lastHum._created || new Date().toISOString(),
-        value: parseFloat(lastHum.ril_dato) || 0,
-      });
-    }
-  }
+    console.log("✅ Storici FINALI con fallback:", {
+      tempHistory: tempHistory.length,
+      humHistory: humHistory.length,
+      weightHistory: weightHistory.length,
+    });
 
-  if (weightHistory.length === 0 && seaWeight) {
-    const lastWeight = lastBySeaId[String(seaWeight.sea_id)];
-    if (lastWeight && lastWeight.ril_dato) {
-      weightHistory.push({
-        timestamp: lastWeight.ril_dataOra || lastWeight._created || new Date().toISOString(),
-        value: parseFloat(lastWeight.ril_dato) || 0,
-      });
-    }
-  }
-
-  console.log("✅ Storici FINALI con fallback:", {
-    tempHistory: tempHistory.length,
-    humHistory: humHistory.length,
-    weightHistory: weightHistory.length,
-  });
-
-  return {
-    ...hive,
-    temperature: tempHistory.length > 0 ? tempHistory[tempHistory.length - 1].value : 0,
-    humidity: humHistory.length > 0 ? humHistory[humHistory.length - 1].value : 0,
-    weight: weightHistory.length > 0 ? weightHistory[weightHistory.length - 1].value : 0,
-    tempHistory,
-    humHistory,
-    weightHistory,
-  };
-}, [selectedHiveId, hives, rilevazioni, sensoriArnia, lastBySeaId, tipi]);
+    return {
+      ...hive,
+      temperature: tempHistory.length > 0 ? tempHistory[tempHistory.length - 1].value : 0,
+      humidity: humHistory.length > 0 ? humHistory[humHistory.length - 1].value : 0,
+      weight: weightHistory.length > 0 ? weightHistory[weightHistory.length - 1].value : 0,
+      tempHistory,
+      humHistory,
+      weightHistory,
+    };
+  }, [selectedHiveId, hives, rilevazioni, sensoriArnia, lastBySeaId, tipi]);
 
   // ✅ THRESHOLDS da DB
   const thresholds = useMemo(() => {
@@ -313,134 +325,47 @@ const selectedHive = useMemo(() => {
   }, [sensoriArnia, lastBySeaId, tipi]);
 
   // ✅ LOAD INIZIALE
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        setError("");
-        setLoading(true);
-
-        const [apiariList, arnieList, tipiList] = await Promise.all([
-          api.listApiari(),
-          api.listArnie(),
-          api.listTipiRilevazione(),
-        ]);
-
-        if (!alive) return;
-
-        setApiari(Array.isArray(apiariList) ? apiariList : []);
-        setArnieRaw(Array.isArray(arnieList) ? arnieList : []);
-        setTipi(Array.isArray(tipiList) ? tipiList : []);
-
-        const first = Array.isArray(arnieList) && arnieList.length ? String(arnieList[0].arn_id) : null;
-        setSelectedHiveId(first);
-      } catch (e) {
-        if (!alive) return;
-        setError(e.message || "Errore caricamento DB");
-      } finally {
-        if (!alive) return;
-        setLoading(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-// ✅ LOAD PER ARNIA SELEZIONATA
 useEffect(() => {
-  if (!selectedHiveId) return;
   let alive = true;
-
+  
   (async () => {
     try {
       setError("");
       setLoading(true);
 
-      const sens = await api.listSensoriArniaByArnia(selectedHiveId);
+      const [apiariList, arnieList, tipiList] = await Promise.all([
+        api.listApiari(),
+        api.listArnie(),
+        api.listTipiRilevazione(),
+      ]);
+
       if (!alive) return;
 
-      const sensList = Array.isArray(sens) ? sens : [];
-      setSensoriArnia(sensList);
-
-      const seaIds = sensList.map((s) => Number(s.sea_id)).filter((n) => Number.isFinite(n));
+      setApiari(Array.isArray(apiariList) ? apiariList : []);
       
-      // ✅ CREA UNA MAPPA sea_id → arn_id
-      const seaIdToArnId = new Map(sensList.map(s => [Number(s.sea_id), Number(s.sea_arn_id)]));
+      // ✅ FILTRA le arnie in base all'apiario dell'utente
+      let arnieFiltered = Array.isArray(arnieList) ? arnieList : [];
       
-      if (seaIds.length === 0) {
-        setLastBySeaId({});
-        setRilevazioni([]);
-        setNotifications([]);
-        setLoading(false);
-        return;
-      }
-
-      const ril = await api.listRilevazioniForSeaIds(seaIds);
-      if (!alive) return;
-
-      const rilList = Array.isArray(ril) ? ril : [];
-
-      const map = {};
-      for (const r of rilList) {
-        const k = String(r.ril_sea_id);
-        if (!map[k]) map[k] = r;
-      }
-      setLastBySeaId(map);
-
-      // ✅ CARICA TUTTE LE RILEVAZIONI PER GLI STORICI
-      console.log("🔄 Caricamento rilevazioni...");
-      const allRil = await api.listRilevazioni(1000);
-      console.log("📦 Rilevazioni ricevute:", allRil);
-      console.log("📊 Numero rilevazioni:", allRil?.length || 0);
-
-      if (!alive) return;
-
-      // ✅ AGGIUNGI ril_arn_id VIRTUALMENTE usando sea_id
-      const rilevazioniArray = (Array.isArray(allRil) ? allRil : []).map(r => {
-        // Se ril_arn_id già esiste, usalo
-        if (r.ril_arn_id) return r;
-        
-        // Altrimenti, ricavalo da ril_sea_id
-        const arnId = seaIdToArnId.get(Number(r.ril_sea_id));
-        return {
-          ...r,
-          ril_arn_id: arnId || null  // ✅ AGGIUNGI ril_arn_id
-        };
-      });
+      // ✅ Recupera l'apiario dell'utente dal localStorage
+      const userApiarioId = localStorage.getItem("userApiarioId");
+      const adminAuthed = localStorage.getItem("adminAuthed");
+      const isAdmin = adminAuthed === "true";
       
-      setRilevazioni(rilevazioniArray);
-
-      console.log("✅ Rilevazioni salvate nello stato:", rilevazioniArray.length);
-
-      if (selectedHiveId) {
-        const rilArnia = rilevazioniArray.filter(r => String(r.ril_arn_id) === selectedHiveId);
-        console.log(`🐝 Rilevazioni per arnia ${selectedHiveId}:`, rilArnia.length);
-        console.log("📋 Dettaglio rilevazioni arnia:", rilArnia);
+      // ✅ Se NON è admin E ha un apiario assegnato, filtra
+      if (!isAdmin && userApiarioId && userApiarioId !== "null" && userApiarioId !== "" && userApiarioId !== "undefined") {
+        arnieFiltered = arnieFiltered.filter((a) => {
+          return String(a.arn_api_id) === String(userApiarioId);
+        });
       }
+      
+      setArnieRaw(arnieFiltered);
+      setTipi(Array.isArray(tipiList) ? tipiList : []);
 
-      // ✅ CARICA NOTIFICHE
-      const nots = await api.listNotifiche(100);
-      if (!alive) return;
-
-      const notificationsFormatted = Array.isArray(nots) ? nots.map((n, index) => {
-        return {
-          id: n._id || index,
-          date: n._created 
-            ? new Date(n._created).toISOString().split('T')[0] 
-            : new Date().toISOString().split('T')[0],
-          text: n.not_dex || n.not_titolo || 'Notifica',
-          arniaId: n.not_arn_id || selectedHiveId,
-          rawData: n,
-        };
-      }) : [];
-
-      setNotifications(notificationsFormatted);
-
+      const first = arnieFiltered.length ? String(arnieFiltered[0].arn_id) : null;
+      setSelectedHiveId(first);
     } catch (e) {
       if (!alive) return;
-      setError(e.message || "Errore caricamento dati arnia");
+      setError(e.message || "Errore caricamento DB");
     } finally {
       if (!alive) return;
       setLoading(false);
@@ -450,7 +375,111 @@ useEffect(() => {
   return () => {
     alive = false;
   };
-}, [selectedHiveId]);
+}, []);
+
+  // ✅ LOAD PER ARNIA SELEZIONATA
+  useEffect(() => {
+    if (!selectedHiveId) return;
+    let alive = true;
+
+    (async () => {
+      try {
+        setError("");
+        setLoading(true);
+
+        const sens = await api.listSensoriArniaByArnia(selectedHiveId);
+        if (!alive) return;
+
+        const sensList = Array.isArray(sens) ? sens : [];
+        setSensoriArnia(sensList);
+
+        const seaIds = sensList.map((s) => Number(s.sea_id)).filter((n) => Number.isFinite(n));
+        
+        // ✅ CREA UNA MAPPA sea_id → arn_id
+        const seaIdToArnId = new Map(sensList.map(s => [Number(s.sea_id), Number(s.sea_arn_id)]));
+        
+        if (seaIds.length === 0) {
+          setLastBySeaId({});
+          setRilevazioni([]);
+          setNotifications([]);
+          setLoading(false);
+          return;
+        }
+
+        const ril = await api.listRilevazioniForSeaIds(seaIds);
+        if (!alive) return;
+
+        const rilList = Array.isArray(ril) ? ril : [];
+
+        const map = {};
+        for (const r of rilList) {
+          const k = String(r.ril_sea_id);
+          if (!map[k]) map[k] = r;
+        }
+        setLastBySeaId(map);
+
+        // ✅ CARICA TUTTE LE RILEVAZIONI PER GLI STORICI
+        console.log("🔄 Caricamento rilevazioni...");
+        const allRil = await api.listRilevazioni(1000);
+        console.log("📦 Rilevazioni ricevute:", allRil);
+        console.log("📊 Numero rilevazioni:", allRil?.length || 0);
+
+        if (!alive) return;
+
+        // ✅ AGGIUNGI ril_arn_id VIRTUALMENTE usando sea_id
+        const rilevazioniArray = (Array.isArray(allRil) ? allRil : []).map(r => {
+          // Se ril_arn_id già esiste, usalo
+          if (r.ril_arn_id) return r;
+          
+          // Altrimenti, ricavalo da ril_sea_id
+          const arnId = seaIdToArnId.get(Number(r.ril_sea_id));
+          return {
+            ...r,
+            ril_arn_id: arnId || null  // ✅ AGGIUNGI ril_arn_id
+          };
+        });
+        
+        setRilevazioni(rilevazioniArray);
+
+        console.log("✅ Rilevazioni salvate nello stato:", rilevazioniArray.length);
+
+        if (selectedHiveId) {
+          const rilArnia = rilevazioniArray.filter(r => String(r.ril_arn_id) === selectedHiveId);
+          console.log(`🐝 Rilevazioni per arnia ${selectedHiveId}:`, rilArnia.length);
+          console.log("📋 Dettaglio rilevazioni arnia:", rilArnia);
+        }
+
+        // ✅ CARICA NOTIFICHE
+        const nots = await api.listNotifiche(100);
+        if (!alive) return;
+
+        const notificationsFormatted = Array.isArray(nots) ? nots.map((n, index) => {
+          return {
+            id: n._id || index,
+            date: n._created 
+              ? new Date(n._created).toISOString().split('T')[0] 
+              : new Date().toISOString().split('T')[0],
+            text: n.not_dex || n.not_titolo || 'Notifica',
+            arniaId: n.not_arn_id || selectedHiveId,
+            rawData: n,
+          };
+        }) : [];
+
+        setNotifications(notificationsFormatted);
+
+      } catch (e) {
+        if (!alive) return;
+        setError(e.message || "Errore caricamento dati arnia");
+      } finally {
+        if (!alive) return;
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [selectedHiveId]);
 
   // ✅ AGGIUNGI ARNIA
   const addHive = async ({ id, apiarioId }) => {
@@ -518,31 +547,33 @@ useEffect(() => {
   };
 
   const ctxValue = useMemo(
-  () => ({
-    menuOpen,
-    setMenuOpen,
-    userAuthed,
-    setUserAuthed,
-    adminAuthed,
-    setAdminAuthed,
-    showValues,
-    setShowValues,
-    hives,
-    selectedHiveId: selectedHiveId ?? (hives[0]?.id ?? ""),
-    setSelectedHiveId,
-    selectedHive,
-    apiari,
-    selectedApiarioId,
-    setSelectedApiarioId,
-    thresholds,
-    saveThresholds,
-    sensorValues,  // ✅ DEVE ESSERCI QUESTA RIGA
-    notifications,
-    addHive,
-    loading,
-    error,
-  }),
-);
+    () => ({
+      menuOpen,
+      setMenuOpen,
+      userAuthed,
+      setUserAuthed,
+      adminAuthed,
+      setAdminAuthed,
+      showValues,
+      setShowValues,
+      hives,
+      selectedHiveId: selectedHiveId ?? (hives[0]?.id ?? ""),
+      setSelectedHiveId,
+      selectedHive,
+      apiari,
+      selectedApiarioId,
+      setSelectedApiarioId,
+      thresholds,
+      saveThresholds,
+      sensorValues,
+      notifications,
+      addHive,
+      loading,
+      error,
+    }),
+    [menuOpen, userAuthed, adminAuthed, showValues, hives, selectedHiveId, selectedHive, apiari, selectedApiarioId, thresholds, sensorValues, notifications, loading, error]
+  );
+
   return (
     <AppContext.Provider value={ctxValue}>
       <AppLayout>

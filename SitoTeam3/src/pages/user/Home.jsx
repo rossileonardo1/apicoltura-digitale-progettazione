@@ -8,11 +8,16 @@ export default function Home() {
     hives,
     selectedHiveId,
     setSelectedHiveId,
+    selectedHive,
     showValues,
     setShowValues,
     sensorValues,
-    thresholds // <--- ORA PRENDIAMO LE SOGLIE DA QUI
+    thresholds,
   } = useContext(AppContext);
+
+  // ✅ Nome e luogo apiario dell'arnia selezionata
+  const apiarioNome = selectedHive?.apiarioNome || "Apiario";
+  const apiarioLuogo = selectedHive?.location || "";
 
   // Funzione che calcola lo stato basandosi sulle soglie dell'Admin
   const getStatus = (type, value) => {
@@ -84,6 +89,28 @@ export default function Home() {
 
   return (
     <div className="space-y-5">
+      {/* ✅ BADGE APIARIO */}
+      {selectedHive && (
+        <div className="card-white rounded-2xl p-4 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50">
+          <div className="flex items-center gap-3">
+            <div className="text-4xl">📍</div>
+            <div className="flex-1">
+              <div className="text-xs text-yellow-600 font-semibold uppercase tracking-wide mb-1">
+                Apiario Attuale
+              </div>
+              <div className="text-lg font-bold text-yellow-900">
+                {apiarioNome}
+              </div>
+              {apiarioLuogo && (
+                <div className="text-xs text-yellow-700 mt-0.5">
+                  📌 {apiarioLuogo}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Selezione arnia */}
       <div className="card-white rounded-xl p-4">
         <div className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">
@@ -97,10 +124,15 @@ export default function Home() {
         >
           {hives.map((h) => (
             <option key={h.id} value={h.id}>
-              {h.name} — {h.location}
+              {h.name} — {h.apiarioNome}
             </option>
           ))}
         </select>
+        
+        {/* ✅ Info numero arnie */}
+        <div className="mt-2 text-xs text-gray-500 text-center">
+          {hives.length} {hives.length === 1 ? "arnia disponibile" : "arnie disponibili"}
+        </div>
       </div>
 
       {/* Toggle Privacy */}
