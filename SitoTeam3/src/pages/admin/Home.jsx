@@ -161,37 +161,7 @@ export default function AdminHome() {
       </div>
     </div>
   )}
-</div>
-
-      {/* Soglie */}
-      <div className="card-white rounded-2xl p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Gestione Soglie</h2>
-        <div className="grid grid-cols-3 gap-3">
-          <button
-            onClick={() => nav("/admin/th-temp")}
-            className="p-4 rounded-xl bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 hover:border-red-400 transition-all"
-          >
-            <div className="text-3xl mb-2">🌡️</div>
-            <div className="font-semibold text-gray-900">Temperatura</div>
-          </button>
-
-          <button
-            onClick={() => nav("/admin/th-hum")}
-            className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 hover:border-blue-400 transition-all"
-          >
-            <div className="text-3xl mb-2">💧</div>
-            <div className="font-semibold text-gray-900">Umidità</div>
-          </button>
-
-          <button
-            onClick={() => nav("/admin/th-weight")}
-            className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 hover:border-purple-400 transition-all"
-          >
-            <div className="text-3xl mb-2">⚖️</div>
-            <div className="font-semibold text-gray-900">Peso</div>
-          </button>
-        </div>
-      </div>
+</div>   
 
       {/* Torna Indietro */}
       <button

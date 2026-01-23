@@ -2,7 +2,7 @@ const BASE_URL = import.meta.env.VITE_RESTDB_URL;
 const API_KEY = import.meta.env.VITE_RESTDB_APIKEY;
 
 function must(v, name) {
-  if (!v) throw new Error(`Manca ${name} nel file . env`);
+  if (!v) throw new Error(`Manca ${name} nel file .env`);
   return v;
 }
 
@@ -15,11 +15,11 @@ export async function restdb(path, { method = "GET", body, query } = {}) {
   if (query) {
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === null) continue;
-      url.searchParams. set(k, typeof v === "string" ? v :  JSON.stringify(v));
+      url.searchParams.set(k, typeof v === "string" ? v : JSON.stringify(v));
     }
   }
 
-  const res = await fetch(url. toString(), {
+  const res = await fetch(url.toString(), {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -37,7 +37,7 @@ export async function restdb(path, { method = "GET", body, query } = {}) {
     data = text;
   }
 
-  if (! res.ok) throw new Error(`RESTDB ${method} ${path} -> ${res.status}: ${text}`);
+  if (!res.ok) throw new Error(`RESTDB ${method} ${path} -> ${res.status}: ${text}`);
   return data;
 }
 
@@ -48,7 +48,7 @@ export const api = {
   },
   
   listArnie() {
-    return restdb("/arnie", { query:  { max: 200 } });
+    return restdb("/arnie", { query: { max: 200 } });
   },
   
   listTipiRilevazione() {
@@ -62,12 +62,23 @@ export const api = {
     });
   },
 
+  // ✅ CORRETTO - Rilevazioni per sensori specifici
   listRilevazioniForSeaIds(seaIds) {
     return restdb("/rilevazioni", {
-      query:  {
-        q: { ril_sea_id: { $in: seaIds. map(Number) } },
-        h: { $orderby: { ril_dataOra: -1 } },
-        max: 200,
+      query: { 
+        q: { ril_sea_id: { $in: seaIds } }, 
+        max: 1000, 
+        h: { $orderby: { _created: -1 } } 
+      },
+    });
+  },
+
+  // ✅ NUOVO - Tutte le rilevazioni (per gli storici)
+  listRilevazioni(limit = 1000) {
+    return restdb("/rilevazioni", {
+      query: { 
+        max: limit, 
+        h: { $orderby: { _created: -1 } } 
       },
     });
   },
@@ -81,7 +92,7 @@ export const api = {
 
   // ====== Scritture ======
   patchSensoreArnia(restdb_id, payload) {
-    return restdb(`/sensoriarnia/${restdb_id}`, { method: "PATCH", body:  payload });
+    return restdb(`/sensoriarnia/${restdb_id}`, { method: "PATCH", body: payload });
   },
 
   createArnia(payload) {

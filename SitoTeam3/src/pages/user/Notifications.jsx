@@ -51,11 +51,10 @@ export default function Notifications() {
             const hive = getHiveInfo(notif);
             const isExpanded = expandedId === notif.id;
             
-            // ✅ Estrai titolo e descrizione
+            // ✅ USA not_dex invece di not_desc
             const titolo = notif.rawData?.not_titolo || "";
-            const descrizione = notif.rawData?.not_desc || 
+            const descrizione = notif.rawData?.not_dex || 
                               notif.rawData?.not_messaggio || 
-                              notif.rawData?.not_descrizione || 
                               notif.text || "";
             
             // ✅ Determina il tipo di notifica
@@ -192,27 +191,7 @@ export default function Notifications() {
                         )}
                       </div>
                     </div>
-
-                    {/* Dati grezzi (opzionale) */}
-                    {notif.rawData && (
-                      <details className="bg-gray-100 rounded-xl overflow-hidden">
-                        <summary className="cursor-pointer p-3 text-xs font-bold text-gray-600 hover:bg-gray-200 transition-colors">
-                          🔍 Dati tecnici completi
-                        </summary>
-                        <div className="p-3 bg-gray-800 text-green-400 font-mono text-xs overflow-auto max-h-64">
-                          {Object.entries(notif.rawData).map(([key, value]) => (
-                            <div key={key} className="mb-1">
-                              <span className="text-yellow-300">{key}</span>:{" "}
-                              <span className="text-white">
-                                {typeof value === 'object' 
-                                  ? JSON.stringify(value, null, 2) 
-                                  : String(value)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
+                   
                   </div>
                 )}
               </div>
