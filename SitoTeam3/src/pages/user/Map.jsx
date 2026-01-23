@@ -1,4 +1,3 @@
-/*
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
@@ -17,7 +16,7 @@ let DefaultIcon = L.icon({
   iconAnchor: [12, 41],
 });
 
-L. Marker.prototype.options.icon = DefaultIcon;
+L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function Map() {
   const nav = useNavigate();
@@ -80,7 +79,7 @@ export default function Map() {
 
             {hives.map((hive) => {
               // ✅ Controlla che lat/lng siano validi
-              if (!hive. lat || !hive.lng || isNaN(hive.lat) || isNaN(hive. lng)) {
+              if (!hive.lat || !hive.lng || isNaN(hive.lat) || isNaN(hive.lng)) {
                 return null;
               }
 
@@ -94,7 +93,7 @@ export default function Map() {
                         {hive.apiarioNome || "Apiario sconosciuto"}
                       </div>
                       <div className="text-xs text-gray-400 mt-1">
-                        {hive.lat. toFixed(4)}, {hive.lng.toFixed(4)}
+                        {hive.lat.toFixed(4)}, {hive.lng.toFixed(4)}
                       </div>
                     </div>
                   </Popup>
@@ -142,5 +141,3 @@ export default function Map() {
     </div>
   );
 }
-
-*/
