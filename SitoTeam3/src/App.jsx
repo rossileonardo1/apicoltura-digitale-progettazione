@@ -11,7 +11,7 @@ import Temperature from "./pages/user/Temperature";
 import Humidity from "./pages/user/Humidity";
 import Weight from "./pages/user/Weight";
 import Notifications from "./pages/user/Notifications";
-//import Map from "./pages/user/Map";
+import Map from "./pages/user/Map";
 
 import AdminAccess from "./pages/admin/Access";
 import AdminHome from "./pages/admin/Home";
@@ -550,7 +550,7 @@ useEffect(() => {
           <Route path="/" element={<Navigate to="/user/login" replace />} />
           <Route path="/user/login" element={<Login />} />
           <Route path="/user/home" element={<RequireUser userAuthed={userAuthed}><Home /></RequireUser>} />
-          {/* <Route path="/user/map" element={<RequireUser userAuthed={userAuthed}><Map /></RequireUser>} /> */}
+          <Route path="/user/map" element={<RequireUser userAuthed={userAuthed}><Map /></RequireUser>} />
           <Route path="/user/temp" element={<RequireUser userAuthed={userAuthed}><Temperature /></RequireUser>} />
           <Route path="/user/hum" element={<RequireUser userAuthed={userAuthed}><Humidity /></RequireUser>} />
           <Route path="/user/weight" element={<RequireUser userAuthed={userAuthed}><Weight /></RequireUser>} />
